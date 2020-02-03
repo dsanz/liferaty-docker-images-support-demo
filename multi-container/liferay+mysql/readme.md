@@ -11,7 +11,7 @@ To connect Liferay to a predefined mysql database running in separate containers
     * Use volume to mount /var/lib/mysql in the container, as explained in the [image documentation](https://hub.docker.com/_/mysql/)
 * Make liferay aware of where database is
     * Use env vars to tell mysql the DB name and credentials to use
-    * Provide `portal-ext.properties` via mount with the right connection properties
+    * Use env vars to tell liferay about the DB connection properties 
 * Ensure mysql is ready to work when Liferay connects to it
     * Provide `wait-for-mysql.sh` custom script to the liferay container that waits for mysql service to become ready
     * Script calls a local copy of [wait-for-it](https://github.com/vishnubob/wait-for-it)
