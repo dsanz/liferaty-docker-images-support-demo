@@ -1,9 +1,9 @@
 The simplest multi-container application starts 2 containers using basic docker compose features.
 
-##Goal
+## Goal
 To connect Liferay to a predefined mysql database running in separate containers
 
-##Requirements
+## Requirements
 * Do not create child images unless strictly needed: use env vars and mounts where possible
 * Tell mysql to create the DB if it does not exist
     * Set `MYSQL_DATABASE` env var. That name is fixed and can not be changed
@@ -16,7 +16,7 @@ To connect Liferay to a predefined mysql database running in separate containers
     * Provide `wait-for-mysql.sh` custom script to the liferay container that waits for mysql service to become ready
     * Script calls a local copy of [wait-for-it](https://github.com/vishnubob/wait-for-it)
     
-##Not covered yet
+## Not covered yet
 * Database timezone
 * Database character encoding
 * Ensure character encoding and timezone are the same in DB and JVM
