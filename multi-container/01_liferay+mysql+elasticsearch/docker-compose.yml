@@ -1,0 +1,34 @@
+version: '3'
+services:
+  liferay:
+    image: liferay/portal:7.2.1-ga2
+    environment:
+      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_DRIVER_UPPERCASEC_LASS_UPPERCASEN_AME: com.mysql.cj.jdbc.Driver
+      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL: jdbc:mysql://${mysql_container_name}:3306/${mysql_database_name}?useUnicode=true&characterEncoding=UTF-8&useFastDateParsing=false
+      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_USERNAME: ${mysql_user_name}
+      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_PASSWORD: ${mysql_user_password}
+      LIFERAY_BROWSER_PERIOD_LAUNCHER_PERIOD_URL:
+    ports:
+      - 8080:8080
+    volumes:
+      - ./liferay:/mnt/liferay
+    networks:
+      - liferay-net
+  database:
+    image: mysql:8.0
+    # no need to expose ports as both services share the network
+    # hostname directive is not enough for liferay to see the database
+    container_name: ${mysql_container_name}
+    environment:
+      MYSQL_ROOT_PASSWORD: testroot
+      MYSQL_DATABASE: ${mysql_database_name}
+      MYSQL_USER: ${mysql_user_name}
+      MYSQL_PASSWORD: ${mysql_user_password}
+    networks:
+      - liferay-net
+    volumes:
+      - volume-mysql:/var/lib/mysql
+networks:
+  liferay-net:
+volumes:
+  volume-mysql:
