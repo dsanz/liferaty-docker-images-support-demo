@@ -20,5 +20,9 @@ services:
       MYSQL_PASSWORD: test
     networks:
       - liferay-net
+    volumes:
+      - volume-mysql:/var/lib/mysql
 networks:
   liferay-net:
+volumes:
+  volume-mysql:
