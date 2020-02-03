@@ -11,5 +11,5 @@ Challenges:
     * Use env vars to tell mysql the DB name and credentials
     * Provide portal-ext.properties via mount
 * Ensure mysql is ready to work when Liferay connects to it
-    * Provide custom script to the liferay container that waits for some seconds (less reliable)
-     
+    * Provide custom script to the liferay container that waits for mysql service to become ready
+    * Script calls a local copy of [wait-for-it](https://github.com/vishnubob/wait-for-it)

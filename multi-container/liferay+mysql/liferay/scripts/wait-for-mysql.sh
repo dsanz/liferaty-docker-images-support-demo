@@ -1,2 +1,3 @@
 #!/usr/bin/env bash
-sleep 15
+chmod a+x /opt/liferay/wait-for-it.sh
+bash /opt/liferay/wait-for-it.sh -s -t 60 mysql:3306
