@@ -1,10 +1,12 @@
-The simplest multi-container application starts 2 containers using basic docker compose features.
+The simplest multi-container application starts 3 containers using basic docker compose features.
 
 ## Goal
-To connect Liferay to a predefined mysql database running in separate containers
+To connect Liferay to a predefined mysql database and a single elasticsearch, running in separate containers
 
 ## Requirements
 * Do not create child images unless strictly needed: use env vars and mounts where possible
+* Define an elasticsearch cluster, using most recent elasticsearch version for the latest available liferay DXP image
+* Connect liferay to the elasticsearch node
 * Tell mysql to create the DB if it does not exist
     * Set `MYSQL_DATABASE` env var. That name is fixed and can not be changed
 * Make DB to survive to container deletion
@@ -21,3 +23,5 @@ To connect Liferay to a predefined mysql database running in separate containers
 * Database timezone
 * Database character encoding
 * Ensure character encoding and timezone are the same in DB and JVM
+* Elastic search plugins
+* Elastic search [advanced configuration](https://www.elastic.co/guide/en/elasticsearch/reference/7.5/docker.html)
