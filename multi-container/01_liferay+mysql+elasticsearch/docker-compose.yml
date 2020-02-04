@@ -29,8 +29,32 @@ services:
       - liferay-net
     volumes:
       - volume-mysql:/var/lib/mysql
+  search:    # https://www.elastic.co/guide/en/elasticsearch/reference/7.5/docker.html
+    image: elasticsearch:7.3.0
+    container_name: elasticsearch
+    networks:
+      - liferay-net
+    volumes:
+      - volume-elasticsearch:/usr/share/elasticsearch/data
+    environment:
+      cluster.name: LiferayElasticsearchCluster
+      node.name: LiferayElasticsearchCluster_node1
+      discovery.type: single-node
+      bootstrap.memory_lock: "true"
+      ES_JAVA_OPTS: "-Xms2g -Xmx2g"
+    #sysctls:
+      # max virtual memory areas vm.max_map_count [65530] is too low, increase to at least [262144]"
+      #vm.max_map_count: 262144
+    ulimits:
+      # https://www.elastic.co/guide/en/elasticsearch/reference/7.5/max-number-threads-check.html
+      nproc: 4096
+      # https://www.elastic.co/guide/en/elasticsearch/reference/7.5/docker.html#_disable_swapping
+      memlock: -1
+      # https://www.elastic.co/guide/en/elasticsearch/reference/7.5/docker.html#_increase_ulimits_for_nofile_and_nproc
+      nofile: 65535
 networks:
   liferay-net:
 volumes:
   volume-mysql:
   volume-doclib:
+  volume-elasticsearch:
