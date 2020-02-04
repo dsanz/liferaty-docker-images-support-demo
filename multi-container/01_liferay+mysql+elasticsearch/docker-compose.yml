@@ -40,6 +40,7 @@ services:
       cluster.name: LiferayElasticsearchCluster
       node.name: LiferayElasticsearchCluster_node1
       discovery.type: single-node
+      network.host: 0
       bootstrap.memory_lock: "true"
       ES_JAVA_OPTS: "-Xms2g -Xmx2g"
     #sysctls:
