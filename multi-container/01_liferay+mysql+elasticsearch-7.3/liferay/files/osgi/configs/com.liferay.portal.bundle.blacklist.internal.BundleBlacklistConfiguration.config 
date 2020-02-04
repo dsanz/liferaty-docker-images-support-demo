@@ -7,5 +7,5 @@ blacklistBundleSymbolicNames=[ \
   "Liferay\ CE Foundation\ -\ Liferay\ CE\ Connector\ to\ Elasticsearch\ 6\ -\ Impl", \
   "Liferay\ CE Foundation\ -\ Liferay\ CE\ Connector\ to\ Elasticsearch\ 6\ -\ API", \
   "Liferay\ Connector\ to\ X-Pack\ Security\ [Elastic\ Stack\ 6.x]", \
-  "Liferay\ Connector\ to\ X-Pack\ Monitoring\ [Elastic\ Stack\ 6.x", \
+  "Liferay\ Connector\ to\ X-Pack\ Monitoring\ [Elastic\ Stack\ 6.x]", \
   ]
