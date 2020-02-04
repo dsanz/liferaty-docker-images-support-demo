@@ -9,8 +9,9 @@ To connect Liferay to a predefined mysql database and a single elasticsearch, ru
 * Connect liferay to the elasticsearch node
 * Tell mysql to create the DB if it does not exist
     * Set `MYSQL_DATABASE` env var. That name is fixed and can not be changed
-* Make DB to survive to container deletion
+* Make **all data** to survive to container deletion
     * Use volume to mount /var/lib/mysql in the container, as explained in the [image documentation](https://hub.docker.com/_/mysql/)
+    * Use vulime to mount default store file path (${liferay_home}/data/document_library)
 * Make liferay aware of where database is
     * Use env vars to tell mysql the DB name and credentials to use
     * Use env vars to tell liferay about the DB connection properties
