@@ -12,9 +12,9 @@ services:
       - 8080:8080
     volumes:
       - ./liferay:/mnt/liferay
+      - volume-doclib:/opt/liferay/data/document_library
     networks:
       - liferay-net
-      - volume-doclib:/opt/liferay/data/document_library
   database:
     image: mysql:8.0
     # no need to expose ports as both services share the network
