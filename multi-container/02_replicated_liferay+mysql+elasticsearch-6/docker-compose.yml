@@ -31,18 +31,17 @@ services:
       - liferay-net
     volumes:
       - volume-mysql:/var/lib/mysql
-  search:    # https://www.elastic.co/guide/en/elasticsearch/reference/7.5/docker.html
-    image: elasticsearch:7.3.0
+  search:
+    image: elasticsearch:6.5.4
     container_name: elasticsearch
     networks:
       - liferay-net
     volumes:
       - volume-elasticsearch:/usr/share/elasticsearch/data
-      - ./elasticsearch/plugins-7.3.0:/usr/share/elasticsearch/plugins
     environment:
       cluster.name: LiferayElasticsearchCluster
       node.name: LiferayElasticsearchCluster_node1
-      discovery.type: single-node
+      discovery.zen.minimum_master_nodes: 1
       network.host: 0
       bootstrap.memory_lock: "true"
       ES_JAVA_OPTS: "-Xms2g -Xmx2g"
