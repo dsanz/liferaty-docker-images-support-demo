@@ -38,6 +38,7 @@ services:
       - liferay-net
     volumes:
       - volume-elasticsearch:/usr/share/elasticsearch/data
+      - ./elasticsearch/plugins-7.3.0:/usr/share/elasticsearch/plugins
     environment:
       cluster.name: LiferayElasticsearchCluster
       node.name: LiferayElasticsearchCluster_node1
