@@ -1,4 +1,4 @@
-The simplest multi-container application starts 3 containers using basic docker compose features.
+This multi-container application starts 3 containers using docker compose features.
 
 ## Goal
 To connect Liferay to a predefined mysql database and a single elasticsearch, running in separate containers
