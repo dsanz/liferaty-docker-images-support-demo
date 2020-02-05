@@ -54,7 +54,7 @@ services:
       # https://www.elastic.co/guide/en/elasticsearch/reference/7.5/docker.html#_disable_swapping
       memlock: -1
       # https://www.elastic.co/guide/en/elasticsearch/reference/7.5/docker.html#_increase_ulimits_for_nofile_and_nproc
-      nofile: 65535
+      nofile: 65536
 networks:
   liferay-net_02:
 volumes:
