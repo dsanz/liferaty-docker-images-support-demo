@@ -14,9 +14,9 @@ services:
       - 8080:8080
     volumes:
       - ./liferay:/mnt/liferay
-      - volume-doclib:/opt/liferay/data/document_library
+      - volume_02-doclib:/opt/liferay/data/document_library
     networks:
-      - liferay-net
+      - liferay-net_02
   database:
     image: mysql:8.0
     # no need to expose ports as both services share the network
@@ -28,16 +28,16 @@ services:
       MYSQL_USER: ${mysql_user_name}
       MYSQL_PASSWORD: ${mysql_user_password}
     networks:
-      - liferay-net
+      - liferay-net_02
     volumes:
-      - volume-mysql:/var/lib/mysql
+      - volume_02-mysql_8.0:/var/lib/mysql
   search:
     image: elasticsearch:6.5.4
     container_name: elasticsearch
     networks:
-      - liferay-net
+      - liferay-net_02
     volumes:
-      - volume-elasticsearch:/usr/share/elasticsearch/data
+      - volume_02-elasticsearch_6.5.4:/usr/share/elasticsearch/data
     environment:
       cluster.name: LiferayElasticsearchCluster
       node.name: LiferayElasticsearchCluster_node1
@@ -56,8 +56,8 @@ services:
       # https://www.elastic.co/guide/en/elasticsearch/reference/7.5/docker.html#_increase_ulimits_for_nofile_and_nproc
       nofile: 65535
 networks:
-  liferay-net:
+  liferay-net_02:
 volumes:
-  volume-mysql:
-  volume-doclib:
-  volume-elasticsearch:
+  volume_02-mysql_8.0:
+  volume_02-doclib:
+  volume_02-elasticsearch_6.5.4:
