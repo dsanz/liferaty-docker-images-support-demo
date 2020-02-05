@@ -38,6 +38,7 @@ services:
       - liferay-net_02
     volumes:
       - volume_02-elasticsearch_6.5.4:/usr/share/elasticsearch/data
+      - ./elasticsearch/plugins-6.5.4:/usr/share/elasticsearch/plugins
     environment:
       cluster.name: LiferayElasticsearchCluster
       node.name: LiferayElasticsearchCluster_node1
