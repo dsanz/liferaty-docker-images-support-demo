@@ -40,7 +40,7 @@ services:
       - liferay-net_03
     volumes:
       - volume_03-elasticsearch_6.5.4:/usr/share/elasticsearch/data
-      - ./elasticsearch/plugins-6.5.4:/usr/share/elasticsearch/plugins
+      - ../02_liferay+mysql+elasticsearch-6/elasticsearch/plugins-6.5.4:/usr/share/elasticsearch/plugins
     environment:
       cluster.name: LiferayElasticsearchCluster
       node.name: LiferayElasticsearchCluster_node1
