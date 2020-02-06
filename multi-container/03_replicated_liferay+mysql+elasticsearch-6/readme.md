@@ -13,10 +13,6 @@ This multi-container application starts many containers using docker compose fea
 
 ## Requirements (iteration 02)
 * Define a ES6 node and connect liferay to it
-* Define a number of replicas of the liferay service
-    * Figure it out how to know the container name in case of having replicas
-    * All of them must see each other (check jgroups mechanisms)
-* If the above is not possible, try to replicate each node manually in the docker compose file ("static" cluster)
 
 ## Requirements (iteration 01)
 * Define an elasticsearch node, using most recent elasticsearch version for the latest available liferay DXP image
