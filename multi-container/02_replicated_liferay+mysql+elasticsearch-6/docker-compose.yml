@@ -42,13 +42,15 @@ services:
     environment:
       cluster.name: LiferayElasticsearchCluster
       node.name: LiferayElasticsearchCluster_node1
-      discovery.zen.minimum_master_nodes: 1
-      network.host: 0
+      discovery.zen.minimum_master_nodes: 1     # seems not needed
+      network.host: 0                           # seems not needed neither
       bootstrap.memory_lock: "true"
       ES_JAVA_OPTS: "-Xms2g -Xmx2g"
     #sysctls:      # NOT working as the vm.max_map_count is not under the supported sysctls
       # max virtual memory areas vm.max_map_count [65530] is too low, increase to at least [262144]"
       #vm.max_map_count: 262144
+    #cap_add:       # NOT working neither. The limit we want to change has to be changed in the host, not in the container
+      #- SYS_ADMIN
     ulimits:
       # https://www.elastic.co/guide/en/elasticsearch/reference/7.5/max-number-threads-check.html
       nproc: 4096
