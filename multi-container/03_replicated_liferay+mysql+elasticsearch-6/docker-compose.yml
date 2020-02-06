@@ -1,0 +1,68 @@
+version: '3'
+services:
+  liferay:
+    image: liferay/portal:7.2.1-ga2
+    environment:
+      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_DRIVER_UPPERCASEC_LASS_UPPERCASEN_AME: com.mysql.cj.jdbc.Driver
+      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL: jdbc:mysql://${mysql_container_name}_03:3306/${mysql_database_name}?useUnicode=true&characterEncoding=UTF-8&useFastDateParsing=false
+      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_USERNAME: ${mysql_user_name}
+      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_PASSWORD: ${mysql_user_password}
+      LIFERAY_BROWSER_PERIOD_LAUNCHER_PERIOD_URL:
+      # only if liferay/dxp:7.2.10.1-sp1 is used
+      LIFERAY_SETUP_PERIOD_DATABASE_PERIOD_JAR_PERIOD_URL_OPENBRACKET_COM_PERIOD_MYSQL_PERIOD_CJ_PERIOD_JDBC_PERIOD__UPPERCASED_RIVER_CLOSEBRACKET_: https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.15/mysql-connector-java-8.0.15.jar
+    ports:
+      - 8080:8080
+    volumes:
+      - ./liferay:/mnt/liferay
+      - volume_03-doclib:/opt/liferay/data/document_library
+    networks:
+      - liferay-net_03
+    deploy:
+      replicas: 2
+  database:
+    image: mysql:8.0
+    # no need to expose ports as both services share the network
+    # hostname directive is not enough for liferay to see the database
+    container_name: ${mysql_container_name}_03
+    environment:
+      MYSQL_ROOT_PASSWORD: testroot
+      MYSQL_DATABASE: ${mysql_database_name}
+      MYSQL_USER: ${mysql_user_name}
+      MYSQL_PASSWORD: ${mysql_user_password}
+    networks:
+      - liferay-net_03
+    volumes:
+      - volume_03-mysql_8.0:/var/lib/mysql
+  search:
+    image: elasticsearch:6.5.4
+    container_name: elasticsearch_03
+    networks:
+      - liferay-net_03
+    volumes:
+      - volume_03-elasticsearch_6.5.4:/usr/share/elasticsearch/data
+      - ./elasticsearch/plugins-6.5.4:/usr/share/elasticsearch/plugins
+    environment:
+      cluster.name: LiferayElasticsearchCluster
+      node.name: LiferayElasticsearchCluster_node1
+      discovery.zen.minimum_master_nodes: 1     # seems not needed
+      network.host: 0                           # seems not needed neither
+      bootstrap.memory_lock: "true"
+      ES_JAVA_OPTS: "-Xms2g -Xmx2g"
+    #sysctls:      # NOT working as the vm.max_map_count is not under the supported sysctls
+      # max virtual memory areas vm.max_map_count [65530] is too low, increase to at least [262144]"
+      #vm.max_map_count: 262144
+    #cap_add:       # NOT working neither. The limit we want to change has to be changed in the host, not in the container
+      #- SYS_ADMIN
+    ulimits:
+      # https://www.elastic.co/guide/en/elasticsearch/reference/7.5/max-number-threads-check.html
+      nproc: 4096
+      # https://www.elastic.co/guide/en/elasticsearch/reference/7.5/docker.html#_disable_swapping
+      memlock: -1
+      # https://www.elastic.co/guide/en/elasticsearch/reference/7.5/docker.html#_increase_ulimits_for_nofile_and_nproc
+      nofile: 65536
+networks:
+  liferay-net_03:
+volumes:
+  volume_03-mysql_8.0:
+  volume_03-doclib:
+  volume_03-elasticsearch_6.5.4:
