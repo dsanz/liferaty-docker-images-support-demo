@@ -4,6 +4,7 @@ This multi-container application starts many containers using docker compose fea
 To use ES6. Determine if it's possible to have replicas of the liferay container to form a cluster or we have to do it node by node
 
 ## Takeaways
+* ES6 docker image force to set a higher value for a system limit: `sysctl -w vm.max_map_count=262144`. This **must be done on the host machine**. A container [can not change that](https://stackoverflow.com/questions/54845095/cannot-run-sysctl-command-in-dockerfile), not even if you assign SYS_ADMIN capability to it. 
 
 ## Requirements (iteration 02)
 * Define a ES6 node and connect liferay to it
