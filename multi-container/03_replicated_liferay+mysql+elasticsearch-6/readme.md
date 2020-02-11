@@ -10,30 +10,36 @@ To form a Liferay cluster in the docker way, we need several _services_ running 
  A less ideal solution would be to define a service per cluster node. This approach is sub-optimal as it sets a fixed number of nodes and prevents leveraging one of the most salient features available in containerized apps: service scaling. 
 
 ### Service scaling
-Scaling is about running the **same** service in several separate containers. Having just a single service definition has many advantages. Firstly, this lets the orchestrator manage service replicas as required (allocating them in different engines, substituting the unhealty ones,...). Secondly, your composition allows flexible-sized clusters, without having to re-define additional liferay services with the same image but slightly different configuration. Finally, the service definition is more compact and maintainable, though it is a bit more complex.  
+Scaling is about running the **same** service in several separate containers, according to the desired service state. A single definition for liferay service has many advantages:
+* Lets the orchestrator (e.g. [swarm](https://docs.docker.com/engine/swarm/)) manage service replicas to meet the desired state for the service in a declarative way, as opposed to manually managing _n_ liferay services
+* Secondly, your composition allows flexible-sized clusters, as opposed to re-declare additional liferay services with the same image but slightly different configuration. 
+* Service definition is more compact and maintainable  
   
-To make liferay service scaling possible, service must be defined in a way that allow seamless replication. This has some implications:
-* It's not possible to use port bindings (8080:8080) for all the containers. If 2 containers try to run on the same host, the second one won't start.  
-* Container names can not be fixed
-* Liferay cluster configuration must be the same across all containers. For example, specific IPs should not be required, or if they are, container must self-configure before starting Liferay.
-* Future load-balancing/sticky session mechanisms should be ready to work with different number of replicas 
+To make liferay service scaling possible, service must be defined in a way that allow **seamless replication**. This has some implications:
+* _Get rid of port bindings_ (8080:8080) for all the containers. If 2 containers try to run on the same host, the second one won't start.  
+* _Get rid of setting container names_: they can not be fixed as replicas are managed automatically
+* _Liferay cluster configuration must be the same across all containers_: for example, specific IPs should not be required, or if they are, container must self-configure before starting Liferay.
+* _Get rid of fixed configuration for load-balancing/sticky session_: these mechanisms should be ready to work with different number of replicas (out of scope for this iteration) 
 
 There are different mechanisms to scale a service, which depend on the technology you use. In this iteration we'll make it work for docker-compose and docker swarm.
  
 ### Liferay Service configuration
-In general, we'll favor simplicity in the configuration. This allows us to speed up the iterations. To achieve this, we'll make extensive use of environment variables so that all config files, as well as the docker-compose file, can get the values from the variables rather than hardcoding them. 
+In this iteration, Liferay service is defined as follows:
+* No port bindings 
+* All cluster configuration is provided via properties (as env vars)
+* JDBC_ping manages jgroups views
+* No changes in the cache distribution configuration 
+
+In general, we'll favor simplicity and reusability in the configuration. This allows us to speed up the iterations as a change will apply consistently where necessary. To achieve this, we'll make extensive use of environment variables so that all config files, as well as the docker-compose file, can get the values from the variables rather than hardcoding them. This is not taken to the extreme as we're just applying it to env vars provisioning: config files we put in the containers may require manual changes. 
  
-This has some limitations, namely:
+Usage of env vars in the docker-compose file has some limitations, namely:
 * Variable substitution only works in the values of the docker-compose, not in the keys. This prevents us to use them to name volumes and networks. We're using fixed names for them. 
 * In the service definition, it's not possible to reuse env vars created in the dockerfile, such as $LIFERAY_HOME. They seem available only at container runtime.
 
 Nevertheless, the use of a .env file is still very useful. We can define values that are available to the docker engine, so that service definitions can use them. This allows to populate environment variables to different containers (mysql database user for example). In the case of Liferay, that information can be reused in the JDBC ping definition, as Jgroups substitutes variable references for their values.
-   
-In this iteration, Liferay service is defined as follows:
-* No port bindings 
-* All cluster configuration is provided via properties (as env vars).
-* Uses JDBC_ping to manage jgroups views 
 
+Interesting reads: [Docker ARG, ENV and .env - a Complete Guide](https://vsupalov.com/docker-arg-env-variable-guide/)  
+   
 ### docker-compose
 docker-compose can scale a service. In compose file format v2 one could specify `scale: 2` as part of the service configuration. There also was the `docker-compose scale` [deprecated command](https://docs.docker.com/compose/reference/scale/).
 
@@ -44,19 +50,19 @@ As a result, using docker-compose with file format v3, there is no hint in the d
 I was able to scale the liferay service and have a 2-node cluster. Each node has a different IP that can be accessed from the host. You need to know that IP as there are no port bindings (localhost:8080 no longer reaches a container).
  
  ### Docker swarm
-Docker engine can work in swarm mode. File format can still be docker-compose like, but it's important to know that docker-compose and docker stack [ignore different parts of this file](https://docs.docker.com/compose/compose-file/#volume-configuration-reference). 
+Docker engine can work in swarm mode. File format can still be docker-compose like, but it's important to know that docker-compose and docker stack ignore different parts of this file.
  
-Some of these differences directly affect the way services are defined:
- * **Container name is ignored by docker stack**: there is no way to name containers. We stopped giving names to liferay containers (for the pudpose of scaling them), but now, this affects to any container. As container name works as hostname, liferay service needs a different mechanism to know about where database and search engine are. This can now be achieved via network aliases.
+Moreover, some of these differences directly affect the way services are defined. These are the roadblocks I found in order to properly run a compose in swarm:
+ * **Container name is ignored by docker stack**: there is no way to give names to containers. We stopped doing it for the liferay containers (for the purpose of scaling them with docker-compose), but now, this affects to any container. As container name works as hostname, liferay service needs a different mechanism to know about where database and search engine are. This can now be achieved via network aliases.
  * **ulimits are ignored by docker stack**: As a result, it's no longer possible to set some important limits. This seems an issue for [elasticsearch and the memory lock limit](https://stackoverflow.com/questions/55500300/elastic-in-docker-stack-swarm). Fortunately, the other limits we set can be omitted. This does not imply a satisfactory solution as now we depend on host os pre-defined limits. Current solution is to avoid memory lock and document this limitation. Also see how much of this affects ES7 images.
  * **.env file is ignored  by docker stack**: env variables are empty when containers are run. This prevents mysql and liferay to set the right user for the DB. This blocker can be worked around in a couple of ways:
    * Letting docker-compose to make the substitution, then piping the result to docker stack deploy: `docker-compose config | docker stack deploy --compose-file - 03_liferay-cluster`
    * Creating the right environment before running the command. Several examples:
       * Source the env file. Requires exporting all the variables in the .env file, which becomes a bash script:
       * Use the env command with the right names and values: `env $(cat .env | tr "\\n" " ") && docker stack deploy --compose-file - 03_liferay-cluster`
- * **Service replicas are ignored by docker-compose**: you can specify replicas in the compose file under the `deploy` key, but only docker stack will honor them
+ * **Service replicas are ignored by docker-compose**: you can specify replicas in the compose file under the `deploy` key, but only docker stack will honor them. This forces us to use separate mechanisms to scale the service.
 
-Interesting reads: [Docker ARG, ENV and .env - a Complete Guide](https://vsupalov.com/docker-arg-env-variable-guide/), [differences stack file and compose file (stackoverflow)](https://stackoverflow.com/questions/43099408/whats-the-difference-between-a-stack-file-and-a-compose-file)  
+Interesting reads: [docker-compose and docker stack ignore different parts of the compose file (official docs)](https://docs.docker.com/compose/compose-file/#volume-configuration-reference) , [differences stack file and compose file (stackoverflow)](https://stackoverflow.com/questions/43099408/whats-the-difference-between-a-stack-file-and-a-compose-file)  
 
 Steps to run this composition in a swarm
  * Initialize your docker engine to become a single-node swarm:
