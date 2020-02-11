@@ -1,4 +1,4 @@
-version: '3'
+version: '3.7'
 services:
   liferay:
     image: liferay/portal:7.2.1-ga2
@@ -46,12 +46,7 @@ services:
     environment:
       cluster.name: LiferayElasticsearchCluster
       node.name: LiferayElasticsearchCluster_node1
-      bootstrap.memory_lock: "true"
       ES_JAVA_OPTS: "-Xms2g -Xmx2g"
-    ulimits:
-      nproc: 4096
-      memlock: -1
-      nofile: 65536
 networks:
   liferay-net_03:
 volumes:
