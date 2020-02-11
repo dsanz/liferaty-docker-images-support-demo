@@ -49,6 +49,7 @@ services:
       ES_JAVA_OPTS: "-Xms2g -Xmx2g"
 networks:
   liferay-net_03:
+    driver: overlay
 volumes:
   volume_03-mysql_8.0:
   volume_03-doclib:
