@@ -68,16 +68,36 @@ As a result, using docker-compose with file format v3, there is no hint in the d
 I was able to scale the liferay service and have a 2-node cluster. Each node has a different IP that can be accessed
  from the host. You need to know that IP as there are no port bindings (localhost:8080 no longer reaches a container).
  
- ### Docker swarm (WIP)
-Docker engine can work in swarm mode. 
+ ### Docker swarm
+Docker engine can work in swarm mode. File format can still be docker-compose like, but it's important to know that
+ docker-compose and docker stack [ignore different parts of this file](https://docs.docker.com/compose/compose-file/#volume-configuration-reference). 
+ 
+Some of these differences directly affect the way services are defined:
+ * **Container name is ignored by docker stack**: there is no way to name containers. We stopped giving names to liferay containers (for
+  the pudpose of scaling them), but now, this affects to any container. As container name works as hostname, liferay
+   service needs a different mechanism to know about where database and search engine are. This can now be achieved
+    via network aliases.
+ * **ulimits are ignored by docker stack**: As a result, it's no longer possible to set some important limits. This seems an issue for
+  [elasticsearch and the memory lock limit](https://stackoverflow.com/questions/55500300/elastic-in-docker-stack
+  -swarm). Fortunately, the other limits we set can be omitted. This does not imply a satisfactory solution as now we
+   depend on host os pre-defined limits. Current solution is to avoid memory lock and document this limitation. Also
+   see how much of this affects ES7 images
+ * **.env file is ignored  by docker stack**: env variables are empty when containers are run. This prevents mysql and liferay to set the
+  right user for the DB. This blocker can be worked around in a couple of ways:
+   * Letting docker-compose to make the substitution, then piping the result to docker stack deploy: `docker-compose config | docker stack deploy --compose-file - 03_liferay-cluster`
+   * Creating the right environment before running the command. Several examples:
+      * Source the env file. Requires exporting all the variables in the .env file, which becomes a bash script:
+      * Use the env command with the right names and values: `env $(cat .env | tr "\\n" " ") && docker stack deploy --compose-file - 03_liferay-cluster`
+ * **Service replicas are ignored by docker-compose**: you can specify replicas in the compose file under the `deploy` key, but only docker stack will honor them
 
-* Service replicas can be specified in the compose file under the `deploy` key, but docker-compose will ignore them
-* Docker swarm/kubernetes can manage replicas. We'll switch to `docker stack` in this iteration
-* File format can still be docker-compose like, but remember that docker-compose and docker stack [ignore different parts of this file](https://docs.docker.com/compose/compose-file/#volume-configuration-reference)
-* Steps to run this composition in a swarm
-  * Initialize your docker engine to become a single-node swarm:
+Interesting reads: [Docker ARG, ENV and .env - a Complete Guide](https://vsupalov.com/docker-arg-env-variable-guide/), [differences stack file and compose file (stackoverflow)](https://stackoverflow.com/questions/43099408/whats-the-difference-between-a-stack-file-and-a-compose-file)  
+
+Steps to run this composition in a swarm
+ * Initialize your docker engine to become a single-node swarm:
     * `docker swarm init --advertise-addr <IP|interface>` (I've used wlp61s0 which is my wifi interface)
-    * 
+ * Change the docker-compose to accommodate the above elements.
+ * Deploy the stack to the swarm (provided that the environmental variables in the .env file are defined): `docker stack
+  deploy --compose-file docker-compose.yml 03_liferay-cluster`
  
 
 ## Requirements (iteration 03)
