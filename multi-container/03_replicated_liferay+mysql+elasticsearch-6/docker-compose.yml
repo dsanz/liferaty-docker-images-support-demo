@@ -11,7 +11,7 @@ services:
       # at this level, env vars can't reuse vars created in the dockerfile, such as LIFERAY_HOME
       JGROUPS_CONFIG_FILE_PATH: /tomcat/webapps/ROOT/WEB-INF/classes${jgroups_config_file}
       LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_ENABLED: "true"
-      LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_AUTODETECT_PERIOD_ADDRESS: www.google.com:80
+      LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_AUTODETECT_PERIOD_ADDRESS: database:3306
       LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_CHANNEL_PERIOD_PROPERTIES_PERIOD_CONTROL: ${jgroups_config_file}
       LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_CHANNEL_PERIOD_PROPERTIES_PERIOD_TRANSPORT_PERIOD__NUMBER0_: ${jgroups_config_file}
     volumes:
