@@ -10,7 +10,6 @@ services:
       LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_USERNAME: ${mysql_user_name}
       LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_PASSWORD: ${mysql_user_password}
       LIFERAY_BROWSER_PERIOD_LAUNCHER_PERIOD_URL:
-      # at this level, env vars can't reuse vars created in the dockerfile, such as LIFERAY_HOME
       JGROUPS_CONFIG_FILE_PATH: /tomcat/webapps/ROOT/WEB-INF/classes${jgroups_config_file}
       LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_ENABLED: "true"
       LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_AUTODETECT_PERIOD_ADDRESS: database:3306
