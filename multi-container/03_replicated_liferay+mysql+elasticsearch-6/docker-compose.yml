@@ -2,6 +2,8 @@ version: '3.7'
 services:
   liferay:
     image: liferay/portal:7.2.1-ga2
+    #ports:
+    #  - "8080:8080"
     environment:
       LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_DRIVER_UPPERCASEC_LASS_UPPERCASEN_AME: com.mysql.cj.jdbc.Driver
       LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL: jdbc:mysql://database:3306/${mysql_database_name}?useUnicode=true&characterEncoding=UTF-8&useFastDateParsing=false

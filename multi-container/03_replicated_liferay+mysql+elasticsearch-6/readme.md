@@ -16,7 +16,7 @@ Scaling is about running the **same** service in several separate containers, ac
 * Service definition is more compact and maintainable  
   
 To make liferay service scaling possible, service must be defined in a way that allow **seamless replication**. This has some implications:
-* _Get rid of port bindings_ (8080:8080) for all the containers. If 2 containers try to run on the same host, the second one won't start.  
+* _Get rid of host port bindings_ (8080:8080) for scalable services if using docker-compose. When scaling up the service, docker-compose won't start the second one as port is already bound to the host. Note that it's possible to bind ports for replicated services using Docker swarm. The swarm creates a routing mesh which includes a load balancer that can redirect a request to a node running the required service. This iteration will not deal with this as I have to study which load balancing/sticky session mechanism to use, being the routing mesh one of the possible solutions.  
 * _Get rid of setting container names_: they can not be fixed as replicas are managed automatically
 * _Liferay cluster configuration must be the same across all containers_: for example, specific IPs should not be required, or if they are, container must self-configure before starting Liferay.
 * _Get rid of fixed configuration for load-balancing/sticky session_: these mechanisms should be ready to work with different number of replicas (out of scope for this iteration) 
