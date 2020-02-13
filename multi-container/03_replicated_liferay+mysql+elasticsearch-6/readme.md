@@ -1,13 +1,23 @@
-This multi-container liferay application starts many containers. It allows to set up a basic liferay cluser.
 
-## Goal
+
+# Iteration 03: clustering liferay
+
+This multi-container liferay application starts many containers. It allows to set up a basic liferay cluser which can run in docker-compose and docker swarm
+
+## Goals
 * Determine if it's possible to have _replicas_ of the liferay container to form a cluster or we have to define each cluster node as a _separate service_
 * Become knowledgeable about how to specify and run service replicas in docker, and  how it affects container definition and portal configuration
+
+## Requirements 
+* Define replicas for the liferay service
+* Do not replicate container configuration for each liferay node
+* Allow replicas to form a liferay cluster
+* Run this in docker-compose and docker swarm
 
 ## Takeaways
 To form a Liferay cluster in the docker way, we need several _services_ running the liferay container to communicate each other. Ideally, the liferay service should be defined once, then _scaled_. 
  
- A less ideal solution would be to define a service per cluster node. This approach is sub-optimal as it sets a fixed number of nodes and prevents leveraging one of the most salient features available in containerized apps: service scaling. 
+A less ideal solution would be to define a service per cluster node. This approach is sub-optimal as it sets a fixed number of nodes and prevents leveraging one of the most salient features available in containerized apps: service scaling. 
 
 ### Service scaling
 Scaling is about running the **same** service in several separate containers, according to the desired service state. A single definition for liferay service has many advantages:
@@ -82,10 +92,14 @@ This iteraton is focused on just running a basic liferay cluster, so, it's out o
 
 More information about routing mesh and overlay networks can be found in the [official docs](https://docs.docker.com/network/overlay/)
 
-## Requirements (iteration 03)
-* Define replicas for the liferay service
-* Do not replicate container configuration for each liferay node
-* Allow replicas to form a liferay cluster
+## Not covered yet
+* Load balancing, sticky session, tomcat session replication
+* Database timezone
+* Database character encoding
+* Ensure character encoding and timezone are the same in DB and JVM
+* Elastic search [advanced configuration](https://www.elastic.co/guide/en/elasticsearch/reference/7.5/docker.html)
+
+# Previous iterations
 
 ## Requirements (iteration 02)
 * Define a ES6 node and connect liferay to it
@@ -114,9 +128,3 @@ More information about routing mesh and overlay networks can be found in the [of
     * Provide `wait-for-mysql.sh` custom script to the liferay container that waits for mysql service to become ready
     * Script calls a local copy of [wait-for-it](https://github.com/vishnubob/wait-for-it)
     
-## Not covered yet
-* Load balancing, sticky session, tomcat session replication
-* Database timezone
-* Database character encoding
-* Ensure character encoding and timezone are the same in DB and JVM
-* Elastic search [advanced configuration](https://www.elastic.co/guide/en/elasticsearch/reference/7.5/docker.html)
