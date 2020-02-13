@@ -34,14 +34,14 @@ services:
     volumes:
       - volume_04-mysql_8.0:/var/lib/mysql
   search:
-    image: elasticsearch:6.5.4
+    image: elasticsearch:7.3.0
     networks:
       liferay-net_04:
         aliases:
           - search
     volumes:
-      - volume_04-elasticsearch_6.5.4:/usr/share/elasticsearch/data
-      - ../02_liferay+mysql+elasticsearch-6/elasticsearch/plugins-6.5.4:/usr/share/elasticsearch/plugins
+      - volume_04-elasticsearch_7.3.0:/usr/share/elasticsearch/data
+      - 01_liferay+mysql+elasticsearch-7.3/elasticsearch/plugins-7.3.0:/usr/share/elasticsearch/plugins
     environment:
       cluster.name: LiferayElasticsearchCluster
       node.name: LiferayElasticsearchCluster_node1
@@ -52,4 +52,4 @@ networks:
 volumes:
   volume_04-mysql_8.0:
   volume_04-doclib:
-  volume_04-elasticsearch_6.5.4:
+  volume_04-elasticsearch_7.3.0:
