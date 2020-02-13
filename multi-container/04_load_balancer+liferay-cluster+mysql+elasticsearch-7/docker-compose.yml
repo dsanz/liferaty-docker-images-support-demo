@@ -1,0 +1,57 @@
+version: '3.7'
+services:
+  liferay:
+    image: liferay/portal:7.2.1-ga2
+    #ports:
+    #  - "8080:8080"
+    environment:
+      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_DRIVER_UPPERCASEC_LASS_UPPERCASEN_AME: com.mysql.cj.jdbc.Driver
+      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL: jdbc:mysql://database:3306/${mysql_database_name}?useUnicode=true&characterEncoding=UTF-8&useFastDateParsing=false
+      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_USERNAME: ${mysql_user_name}
+      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_PASSWORD: ${mysql_user_password}
+      LIFERAY_BROWSER_PERIOD_LAUNCHER_PERIOD_URL:
+      JGROUPS_CONFIG_FILE_PATH: /tomcat/webapps/ROOT/WEB-INF/classes${jgroups_config_file}
+      LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_ENABLED: "true"
+      LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_AUTODETECT_PERIOD_ADDRESS: database:3306
+      LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_CHANNEL_PERIOD_PROPERTIES_PERIOD_CONTROL: ${jgroups_config_file}
+      LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_CHANNEL_PERIOD_PROPERTIES_PERIOD_TRANSPORT_PERIOD__NUMBER0_: ${jgroups_config_file}
+    volumes:
+      - ./liferay:/mnt/liferay
+      - volume_03-doclib:/opt/liferay/data/document_library
+    networks:
+      - liferay-net_03
+    deploy:
+      replicas: 2
+  database:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: testroot
+      MYSQL_DATABASE: ${mysql_database_name}
+      MYSQL_USER: ${mysql_user_name}
+      MYSQL_PASSWORD: ${mysql_user_password}
+    networks:
+      liferay-net_03:
+        aliases:
+          - database
+    volumes:
+      - volume_03-mysql_8.0:/var/lib/mysql
+  search:
+    image: elasticsearch:6.5.4
+    networks:
+      liferay-net_03:
+        aliases:
+          - search
+    volumes:
+      - volume_03-elasticsearch_6.5.4:/usr/share/elasticsearch/data
+      - ../02_liferay+mysql+elasticsearch-6/elasticsearch/plugins-6.5.4:/usr/share/elasticsearch/plugins
+    environment:
+      cluster.name: LiferayElasticsearchCluster
+      node.name: LiferayElasticsearchCluster_node1
+      ES_JAVA_OPTS: "-Xms2g -Xmx2g"
+networks:
+  liferay-net_03:
+    driver: overlay
+volumes:
+  volume_03-mysql_8.0:
+  volume_03-doclib:
+  volume_03-elasticsearch_6.5.4:
