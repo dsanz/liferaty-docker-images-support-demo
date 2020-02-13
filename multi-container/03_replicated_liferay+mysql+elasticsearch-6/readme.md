@@ -1,4 +1,17 @@
-
+- [Iteration 03: clustering liferay](#iteration-03--clustering-liferay)
+  * [Goals](#goals)
+  * [Requirements](#requirements)
+  * [Takeaways](#takeaways)
+    + [Service scaling](#service-scaling)
+    + [Liferay Service configuration](#liferay-service-configuration)
+    + [docker-compose](#docker-compose)
+    + [Docker swarm](#docker-swarm)
+      - [About port bindings in swarm mode](#about-port-bindings-in-swarm-mode)
+  * [Not covered yet](#not-covered-yet)
+- [Previous iterations](#previous-iterations)
+  * [Iteration 02: add elasticsearch 6](#iteration-02--add-elasticsearch-6)
+  * [Iteration 01: add elasticsearch 7](#iteration-01--add-elasticsearch-7)
+  * [Iteration 00: connect liferay and mysql containers](#iteration-00--connect-liferay-and-mysql-containers)
 
 # Iteration 03: clustering liferay
 
