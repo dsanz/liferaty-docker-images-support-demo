@@ -16,7 +16,7 @@ Scaling is about running the **same** service in several separate containers, ac
 * Service definition is more compact and maintainable  
   
 To make liferay service scaling possible, service must be defined in a way that allow **seamless replication**. This has some implications:
-* _Get rid of host port bindings_ (8080:8080) for scalable services if using docker-compose. When scaling up the service, docker-compose won't start the second one as port is already bound to the host. Note that it's possible to bind ports for replicated services using Docker swarm. The swarm creates a routing mesh which includes a load balancer that can redirect a request to a node running the required service. This iteration will not deal with this as I have to study which load balancing/sticky session mechanism to use, being the routing mesh one of the possible solutions.  
+* _Get rid of host port bindings_ (8080:8080) for scalable services if using docker-compose. When scaling up the service, docker-compose won't start the second one as port is already bound to the host. Note that it's possible to bind ports for replicated services using Docker swarm, see the corresponding subsections for more details.  
 * _Get rid of setting container names_: they can not be fixed as replicas are managed automatically
 * _Liferay cluster configuration must be the same across all containers_: for example, specific IPs should not be required, or if they are, container must self-configure before starting Liferay.
 * _Get rid of fixed configuration for load-balancing/sticky session_: these mechanisms should be ready to work with different number of replicas (out of scope for this iteration) 
@@ -69,6 +69,18 @@ Steps to run this composition in a swarm
     * `docker swarm init --advertise-addr <IP|interface>` (I've used wlp61s0 which is my wifi interface)
  * Change the docker-compose to accommodate the above elements.
  * Deploy the stack to the swarm (provided that the environmental variables in the .env file are defined): `docker stack deploy --compose-file docker-compose.yml 03_liferay-cluster`
+
+#### About port bindings in swarm mode
+As opposed to docker-compose, in docker swarm it's possible to have replicas of a service which exposes ports to the outside world.
+
+The mechanism that this possible is the _routing mesh_, which relies on a couple of networks called _ingress_ and _docker-gwbridge_, created by the swarm. Whereas the latter allows all docker daemons running on the hosts participating in the 
+swarm to exchange information, the former is made available to all services running in the swarm nodes.  
+
+The routing mesh makes it possible to expose the services outside the swarm, no matter which (and how many) nodes actually run it. As a result, a request for a service will be dispatched by the swarm to some node running the required service. 
+
+This iteraton is focused on just running a basic liferay cluster, so, it's out of scope of this iteration to study which load balancing/sticky session mechanism to use, being the routing mesh one of the possible solutions.
+
+More information about routing mesh and overlay networks can be found in the [official docs](https://docs.docker.com/network/overlay/)
 
 ## Requirements (iteration 03)
 * Define replicas for the liferay service
