@@ -41,10 +41,11 @@ services:
           - search
     volumes:
       - volume_04-elasticsearch_7.3.0:/usr/share/elasticsearch/data
-      - 01_liferay+mysql+elasticsearch-7.3/elasticsearch/plugins-7.3.0:/usr/share/elasticsearch/plugins
+      - ../01_liferay+mysql+elasticsearch-7.3/elasticsearch/plugins-7.3.0:/usr/share/elasticsearch/plugins
     environment:
       cluster.name: LiferayElasticsearchCluster
       node.name: LiferayElasticsearchCluster_node1
+      discovery.type: single-node
       ES_JAVA_OPTS: "-Xms2g -Xmx2g"
 networks:
   liferay-net_04:
