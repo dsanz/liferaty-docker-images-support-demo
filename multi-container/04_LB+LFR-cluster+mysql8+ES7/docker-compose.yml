@@ -41,7 +41,11 @@ services:
     networks:
       - liferay-net_04
     deploy:
-      replicas: 2
+      labels: # in swarm, traefik labels must be defined at the service level, not at container one. See https://docs.traefik.io/routing/providers/docker/
+        - traefik.enable=true
+        - traefik.http.services.liferay-service.loadbalancer.server.port=8080
+        - traefik.http.routers.liferay-router.rule=Host(`${app_host_name}`)
+      replicas: 1
   database:
     image: mysql:8.0
     environment:
