@@ -15,4 +15,4 @@
 #docker-compose config | docker stack deploy --compose-file - $namespace
 
 # Method 2: put the .env file contents in the environment, then run. Does not require docker-compose
-env $(cat .env | tr "\\n" " ") docker stack deploy --compose-file docker-compose.yml $iteration
+env $(cat .env | sed -r 's/^\s*#.*$//g') docker stack deploy --compose-file docker-compose.yml $iteration
