@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+. ./.env
+
 # Prerequisites:
 #   * please make sure your docker engine is running in swarm mode. See https://docs.docker.com/engine/swarm/swarm-tutorial/ for details.
 #   * note that a one-node swarm is enough to start
@@ -13,4 +15,4 @@
 #docker-compose config | docker stack deploy --compose-file - $namespace
 
 # Method 2: put the .env file contents in the environment, then run. Does not require docker-compose
-env $(cat .env | tr "\\n" " ") docker stack deploy --compose-file docker-compose.yml 03_liferay-cluster
+env $(cat .env | tr "\\n" " ") docker stack deploy --compose-file docker-compose.yml $iteration

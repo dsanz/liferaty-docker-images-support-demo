@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 
-docker stack rm 03_liferay-cluster
+. ./.env
+
+docker stack rm $iteration
 
 # note that docker stack rm does not delete volumes. To do so, uncomment the following:
 
-# docker volume rm 03_liferay-cluster_volume_03-doclib
-# docker volume rm  03_liferay-cluster_volume_03-elasticsearch_6.5.4
-# docker volume rm  03_liferay-cluster_volume_03-mysql_8.0
+# docker volume rm ${iteration}_volume_04-doclib
+# docker volume rm ${iteration}_volume_04-elasticsearch_7.3.0
+# docker volume rm ${iteration}_volume_04-mysql_8.0
