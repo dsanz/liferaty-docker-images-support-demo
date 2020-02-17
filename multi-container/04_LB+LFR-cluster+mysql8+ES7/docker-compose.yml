@@ -1,5 +1,26 @@
 version: '3.7'
 services:
+  reverse-proxy:
+    image: traefik:v2.1.4
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.swarmmode=true"
+      - "--accesslog"
+      - "--log.level=DEBUG"
+    ports: # we want traefik to be the only element accessible from outside
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - liferay-net_04
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
   liferay:
     image: liferay/portal:7.2.1-ga2
     environment:
