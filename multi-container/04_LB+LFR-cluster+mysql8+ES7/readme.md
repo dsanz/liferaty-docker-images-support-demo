@@ -19,6 +19,15 @@ This multi-container liferay application starts a liferay cluster with load bala
 * JDBC_PING does not like old data. So, to start a fresh instance, it's better to remove the old mysql volume before starting the services. Otherwise, jgroups reports timeouts which make the container to become unhealthy and then stopped
 * [Traefik](https://docs.traefik.io/) is a docker friendly _edge router_ which can be easily configured from a compose file. We'll try this option in this iteration.
 
+### JDBC_PING
+If containers are started and stopped, membership stored in the DB will still be used to set the initial view. This causes problems when the whole stack is stopped, then restarted.
+The problem is that jgrups sets connection timeouts which end up expiring when jgroups decides that current view has to be discarded as nobody responds.
+
+As a result, portal takes too long to start, making healthchecks to fail. This makes swarm to kill the container and restart it.
+
+To solve this, each time mysql container is restarted, we remove the data from JGROUPSPING table in the assumption that DB server will be stopped/restarted along with the liferay ones.
+This is a compromise solution that may be removed later.
+
 ### Traefik configuration
 Traefik allows some really useful things:
  * To start with a minimal configuration, then enhance it

@@ -48,6 +48,8 @@ services:
       replicas: 1
   database:
     image: mysql:8.0
+    command:
+      - "--init-file=/docker-entrypoint-initdb.d/clean_jgroups.sql"
     environment:
       MYSQL_ROOT_PASSWORD: testroot
       MYSQL_DATABASE: ${mysql_database_name}
@@ -59,6 +61,7 @@ services:
           - database
     volumes:
       - volume_04-mysql_8.0:/var/lib/mysql
+      - ./mysql:/docker-entrypoint-initdb.d
   search:
     image: elasticsearch:7.3.0
     networks:
