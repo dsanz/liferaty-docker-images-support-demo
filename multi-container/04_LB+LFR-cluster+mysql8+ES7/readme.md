@@ -42,6 +42,7 @@ __Note__: liferay service take some time to be marked as _healthy_. As a result,
 * Database character encoding
 * Ensure character encoding and timezone are the same in DB and JVM
 * Elastic search [advanced configuration](https://www.elastic.co/guide/en/elasticsearch/reference/7.5/docker.html)
+* Ordered container shutdown, to avoid premature service unavailability
 
 # Previous iterations
 
