@@ -16,8 +16,10 @@ This multi-container liferay application starts a liferay cluster with load bala
 * Re-enable ES7 without the need to restart the container
 
 ## Takeaways
+Headlines:
 * JDBC_PING does not like old data. So, to start a fresh instance, it's better to remove the old mysql volume before starting the services. Otherwise, jgroups reports timeouts which make the container to become unhealthy and then stopped
 * [Traefik](https://docs.traefik.io/) is a docker friendly _edge router_ which can be easily configured from a compose file. We'll try this option in this iteration.
+* Swarm already does load balancing for service replicas via the routing mesh. This overlaps with traefik features and prevents sticky session from working correctly
 
 ### JDBC_PING
 If containers are started and stopped, membership stored in the DB will still be used to set the initial view. This causes problems when the whole stack is stopped, then restarted.
@@ -25,17 +27,38 @@ The problem is that jgrups sets connection timeouts which end up expiring when j
 
 As a result, portal takes too long to start, making healthchecks to fail. This makes swarm to kill the container and restart it.
 
-To solve this, each time mysql container is restarted, we remove the data from JGROUPSPING table in the assumption that DB server will be stopped/restarted along with the liferay ones.
+To solve this, each time mysql container is restarted, we remove the data from JGROUPSPING table in the assumption that DB server will be stopped/restarted along with the liferay ones. This is achieved via --init-file option for mysql server, see mysql service section in the docker compose.
+
 This is a compromise solution that may be removed later.
 
-### Traefik configuration
+### About Traefik
 Traefik allows some really useful things:
- * To start with a minimal configuration, then enhance it
+ * To start with a minimal working configuration, then enhance it
  * Configure it via docker-compose labels
- * Auto-update status from docker runtime 
+ * Auto-update status from docker runtime
+  
 These are compelling advantages to use traefik as load balancer for a simple cluster configuration.
+Main reason is that traefik detects any change in the swarm and knows where are the containers running a specific service, routing the requests appropriately.
 
-__Note__: liferay service take some time to be marked as _healthy_. As a result, traefik will not show the associated services and routing information from the beginning. Information is ready once docker reports liferay service availability 
+__Note__: liferay service take some time to be marked as _healthy_. As a result, traefik will not show the associated services and routing information from the beginning. Information is ready once docker reports liferay service availability
+
+### Sticky session and the routing mesh
+Docker swarm already has a load balancer: the routing mesh. This allows to invoke a service in any swarm node, no matter if the node is actually running the service or not. The mesh will transparently redirect the request to some node running (a replica of) the target service.
+
+Routing mesh does not provide sticky session, which means that, if liferay service is published in the ingress (or a custom overlay) network and managed by the routing mesh, there is no guarantee about which node will serve the request.
+A test in this scenario reveals that it's not possible to log in in Liferay portal when the swarm runs >1 replicas for the liferay service.
+Docker EE provides [sticky session feature](https://docs.docker.com/ee/ucp/interlock/usage/sessions/), however, goal of this iteration is to keep using Docker CE. 
+
+Just adding an external load balancer with sticky session won't resolve the issue. After configuring sticky session cookie in traefik, this is what happened:
+* Traefik detects the list of service replicas and their IP addresses.
+* Traefik decides which IP to use and prepares the cookie.
+* Request is sent to that IP
+* Routing mesh decides which node to use. This does not guarantee that the target IP is reached
+* Traefik resets the sticky session cookie value to match the IP which dispatched the request
+
+As a result, liferay service must be managed by only one load balancer.
+
+It's possible to [bypass the routing mesh](https://docs.docker.com/network/overlay/#bypass-the-routing-mesh-for-a-swarm-service).    
 
 ## Not covered yet
 * Database timezone
