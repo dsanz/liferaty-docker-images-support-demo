@@ -1,3 +1,19 @@
+- [Iteration 04: load balancing and session management](#iteration-04--load-balancing-and-session-management)
+  * [Goals](#goals)
+  * [Requirements](#requirements)
+  * [Takeaways](#takeaways)
+    + [JDBC_PING](#jdbc-ping)
+    + [About Traefik](#about-traefik)
+    + [Sticky session and the routing mesh](#sticky-session-and-the-routing-mesh)
+    + [Host mode: bypassing the routing mesh for the liferay service](#host-mode--bypassing-the-routing-mesh-for-the-liferay-service)
+    + [Session management alternatives wrap-up](#session-management-alternatives-wrap-up)
+  * [Not covered yet](#not-covered-yet)
+- [Previous iterations](#previous-iterations)
+  * [Iteration 03: clustering liferay](#iteration-03--clustering-liferay)
+  * [Iteration 02: add elasticsearch 6](#iteration-02--add-elasticsearch-6)
+  * [Iteration 01: add elasticsearch 7](#iteration-01--add-elasticsearch-7)
+  * [Iteration 00: connect liferay and mysql containers](#iteration-00--connect-liferay-and-mysql-containers)
+
 # Iteration 04: load balancing and session management
 
 This multi-container liferay application starts a liferay cluster with load balancing and user session management, using docker swarm. We switch back to ES7
