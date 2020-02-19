@@ -47,7 +47,7 @@ Docker swarm already has a load balancer: the routing mesh. This allows to invok
 
 Routing mesh does not provide sticky session, which means that, if liferay service is published in the ingress (or a custom overlay) network and managed by the routing mesh, there is no guarantee about which node will serve the request.
 A test in this scenario reveals that it's not possible to log in in Liferay portal when the swarm runs >1 replicas for the liferay service.
-Docker EE provides [sticky session feature](https://docs.docker.com/ee/ucp/interlock/usage/sessions/), however, goal of this iteration is to keep using Docker CE. 
+Docker EE provides [sticky session feature](https://docs.docker.com/ee/ucp/interlock/usage/sessions/) as part of the Layer 7 routing, however, goal of this iteration is to keep using Docker CE. 
 
 Just adding an external load balancer with sticky session won't resolve the issue. After configuring sticky session cookie in traefik, this is what happened:
 * Traefik detects the list of service replicas and their IP addresses.
@@ -56,9 +56,36 @@ Just adding an external load balancer with sticky session won't resolve the issu
 * Routing mesh decides which node to use. This does not guarantee that the target IP is reached
 * Traefik resets the sticky session cookie value to match the IP which dispatched the request
 
-As a result, liferay service must be managed by only one load balancer.
+This leads to the situation that sticky session cookie changes over time, which prevents even a log in to be succesful. As a result, liferay service must be managed by only one load balancer. Briefly, situation is similar to the picture shown in [this section](https://docs.docker.com/engine/swarm/ingress/#using-the-routing-mesh), but the load balancer is part of the swarm. 
 
-It's possible to [bypass the routing mesh](https://docs.docker.com/network/overlay/#bypass-the-routing-mesh-for-a-swarm-service).    
+It's possible to [bypass the routing mesh](https://docs.docker.com/network/overlay/#bypass-the-routing-mesh-for-a-swarm-service).
+
+### Host mode: bypassing the routing mesh for the liferay service
+Bypassing the routing mesh _for a service_ means that when you access to a the service bound port on a given node, you always access the instance of the service running that node.
+
+In docker jargon, this is called **host mode**, and it's enabled with the [long syntax for port definition](https://docs.docker.com/compose/compose-file/#long-syntax-1) by setting `mode: host`.
+
+As explained in the [docs](https://docs.docker.com/engine/swarm/ingress/#bypass-the-routing-mesh), host mode has some implications:
+* If you access a node which is not running a service task, no service (or perhaps a different one) will be listening on it. This gets solved by traefik auto-updates, which ensure that only nodes running the service will be accessed.
+* If you want to run multiple service tasks (replicas) on each node, you can't specify a static target port. There are 2 solutions:
+  * a) Let docker assign random, high-numbered ports, to each service task. For this, `published` has to be omitted in port definition.
+  * b) Use a **global** service rather than a replicated one. Docker guarantees that only one global service instance is run on a given node.
+
+Solution a) is not compatible with traefik. Reason is that [traefik requires a specific target port to be configured](https://docs.traefik.io/providers/docker/#port-detection_1). Traefik can't read this from docker in swarm mode. This makes the mechanism useless for our purposes: if you specify a bound port in host mode, docker will create just one service instance even if more replicas are specified in the docker compose. In this setting, there is no need for sticky sessions.
+
+Solution b) requires multi host swarms. The simplest case in a mutli-host swarm would be to keep everything in a node except the liferay service, which would run in 2 nodes. This way we can keep mysql and ES7 volumes as local to the initial node. Being this a limited setup, it would fulfill the goal of using a liferay cluster with sticky session.     
+
+Given that we favor simplicity, we'd like our external load balancer to read swarm status and auto-update accordingly. As a result, if we keep traefik, we have to use multi-host swarm.
+
+### Session management alternatives wrap-up
+At this point, we have several alternatives to manage sessions:
+* Session replication: not evaluated yet
+* Sticky session
+  * With the routing mesh: requires Docker EE
+  * Without the routing mesh:
+    * Requires multi-host swarm to be able to run more than a liferay service instance. Service must be global (at most one service instance per host)
+    * Or find a way to inform LB about the available ports, in a dynamic way. Traefik does not allow this.
+  * Try kubernetes: not evaluated yet 
 
 ## Not covered yet
 * Database timezone
