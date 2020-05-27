@@ -9,7 +9,7 @@ You'll learn some concepts and how-tos. Particularly, how to run a container, ho
 
 How do I run the container?
 ===========================
-In order to run a liferay container we need let docker engine know what is the image we want to use, along with some other parameters that govern the container runtime behavior.
+To run a liferay container, we need to let docker know what is the image we want to use, along with some other parameters that govern the container runtime behavior.
 
 Let's try the simplest command to run a Liferay container. Open a terminal window and run:
 
