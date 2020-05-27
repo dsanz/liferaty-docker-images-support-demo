@@ -104,6 +104,9 @@ Let's start by asking the process list of the container:
 There are some interesting information here:
 
 * First process is in charge of running the entry point.
+* Second process is a script aimed at starting the tomcat
+* Third process is the JVM running tomcat
+* Fourth process is the ps command we just ran from the host via ``docker exec``
 
 What if container ports are not exposed?
 ----------------------------------------
