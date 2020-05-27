@@ -44,8 +44,9 @@ We may use a variety of ways to communicate with the container:
 * **Via networking**: this allows to reach services running inside the container via network ports. The immediate example is the Liferay portal itself, which can be reached via http port (8080) or AJP. But we might as well access the gogo shell (11311) or even set up a remote debugging session (any port above 1024)
 * **Via docker commands**: docker engine provides some commands that can be run from the host machine to interact with a running container. Once you know the container name, it's possible to execute many commands directly on the container operating system.
 * **Via bind mounts**: parts of the container filesystem can be associated to elements in the host machine filesystem. In the case of Liferay images, this allows to do things like patching the installation.
+* **Via attaching standard input**: container stdin/stdout/stderr can be attached to a terminal which we can control from the host machine. This technique is commonly used together with the docker commands to get (almost) full control of the container.
 
-Following subsections explore some of the above options. You'll see how all the Liferay images use cases have to do with one or more of the above mechanisms.
+Following subsections explore some of the above options. Others will be described in subsequent tutorials. You'll see how all the Liferay images use cases have to do with one or more of the above mechanisms.
 
 How to refer to the container?
 ------------------------------
