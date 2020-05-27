@@ -57,11 +57,7 @@ When a container is created, docker gives it an unique Id. It also assigns a nam
 
 This creates and runs a container named ``liferay-dxp`` with the latest available release. We'll talk about what ``latest`` mean later on.
 
-Let's inquire the docker engine the list of running containers. You should know that there are 2 equivalent commands for this purpose:
-.. code-block:: bash
-
-    $ docker ps
-    $ docker container ls
+Let's inquire the docker engine the list of running containers. You should know that there are 2 equivalent commands for this purpose: ``docker ps`` and ``docker container ls``.
 
 By default, these commands show running containers. If you're fast enough, you'll witness the startup phase of the container:
 
