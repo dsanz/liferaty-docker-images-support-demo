@@ -74,7 +74,7 @@ How to know if container is running?
 ------------------------------------
 Output of previous command shown that container status is "up" and the health indicator says ``starting``. We'll not cover that in this tutorial, so for now just keep in mind that the automatic checks that docker executes to determine what's the status of the container have not started yet. By default, these checks wait for 1 minute to give time to the tomcat to start up Liferay DXP.
 
-As we saw, we can filter the output to get more specific information. We're primarily interested in knowing the status of the running container, and perhaps some additional information such as the published ports or even the image container is using.
+We're primarily interested in knowing the status of the running container, and perhaps some additional information such as the published ports or even the image container is using.
 
 .. code-block:: bash
 
@@ -83,6 +83,8 @@ As we saw, we can filter the output to get more specific information. We're prim
     a7735acbee48        liferay/dxp:7.2.10-dxp-4   "/bin/sh -c /usr/loc…"   7 minutes ago       Up 7 minutes (healthy)   8000/tcp, 8009/tcp, 11311/tcp, 0.0.0.0:8080->8080/tcp   liferay-dxp
 
 After some time, container should become healthy. Please note that liferay may be able to serve requests a bit earlier than the first health check takes place.
+
+If you have more than one container running, you'll have to pay attention to which one you're interested in. You can also filter the listing a little bit with the ``-f`` flag as it will be shown in `Keeping your house clean: removing images and containers`_.
 
 Can I run commands in the container?
 ------------------------------------
