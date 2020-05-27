@@ -53,30 +53,73 @@ When a container is created, docker gives it an unique Id. It also assigns a nam
 
 .. code-block:: bash
 
-    docker run --name liferay-dxp -it -p 8080:8080 liferay/dxp:7.2.10-sp2
+    docker run --name liferay-dxp -it -p 8080:8080 liferay/dxp:7.2.10-dxp-4
 
-This creates and runs a container named ``liferay-dxp`` with the latest available release
+This creates and runs a container named ``liferay-dxp`` with the latest available release. We'll talk about what ``latest`` mean later on.
 
+Let's inquire the docker engine the list of running containers. You should know that there are 2 equivalent commands for this purpose:
+.. code-block:: bash
 
+    $ docker ps
+    $ docker container ls
+
+By default, these commands show running containers. If you're fast enough, you'll witness the startup phase of the container:
+
+.. code-block:: bash
+
+    $ docker ps
+
+    CONTAINER ID        IMAGE                      COMMAND                  CREATED             STATUS                             PORTS                                                   NAMES
+    a7735acbee48        liferay/dxp:7.2.10-dxp-4   "/bin/sh -c /usr/loc…"   27 seconds ago      Up 26 seconds (health: starting)   8000/tcp, 8009/tcp, 11311/tcp, 0.0.0.0:8080->8080/tcp   liferay-dxp
+
+In this example, you may refer to this container either by giving its id (``a7735acbee48``) or its name (``liferay-dxp``). An use case where the container id/name needs to be specified is when running docker commands affecting your container.
 
 How to know if container is running?
 ------------------------------------
-Let's inquire the docker engine to know what is the list of running containers:
+Output of previous command shown that container status is "up" and the health indicator says ``starting``. We'll not cover that in this tutorial, so for now just keep in mind that the automatic checks that docker executes to determine what's the status of the container have not started yet. By default, these checks wait for 1 minute to give time to the tomcat to start up Liferay DXP.
 
+As we saw, we can filter the output to get more specific information. We're primarily interested in knowing the status of the running container, and perhaps some additional information such as the published ports or even the image container is using.
+
+.. code-block:: bash
+
+    $ docker ps
+    CONTAINER ID        IMAGE                      COMMAND                  CREATED             STATUS                   PORTS                                                   NAMES
+    a7735acbee48        liferay/dxp:7.2.10-dxp-4   "/bin/sh -c /usr/loc…"   7 minutes ago       Up 7 minutes (healthy)   8000/tcp, 8009/tcp, 11311/tcp, 0.0.0.0:8080->8080/tcp   liferay-dxp
+
+After some time, container should become healthy. Please note that liferay may be able to serve requests a bit earlier than the first health check takes place.
 
 Can I run commands in the container?
 ------------------------------------
+Yes. Here, running commands mean run any available command in the container's operating system. This is achieved by running the ``docker exec`` command in the host machine. As you may guess, this has a big potential, which we'll illustrate here.
+
+Let's start by asking the process list of the container:
+
+.. code-block:: bash
+
+    $ docker exec liferay-dxp ps
+    PID   USER     TIME  COMMAND
+        1 liferay   0:00 {liferay_entrypo} /bin/bash /usr/local/bin/liferay_entrypoint.sh
+        7 liferay   0:00 {start_liferay.s} /bin/bash /usr/local/bin/start_liferay.sh
+        8 liferay   4:13 /usr/lib/jvm/zulu8/bin/java -Djava.util.logging.config.file=/opt/liferay/tomcat/conf/logging.properties -Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager -Djdk.tls.ephemeralDHKeySize=2048 -Djava.protocol.handler.pkgs=org.apache.catalina.webresources -Dorg.apache.catalina.security.SecurityListener.UMASK=0027 -Dfile.encoding=UTF-8 -Djava.locale.providers=JRE,COMPAT,CLDR -Djava.net.preferIPv4Stack=true -Duser.timezone=GMT -Xms2560m -Xmx2560m -XX:MaxNewSize=1536m -XX:MaxMetaspaceSize=768m -XX:MetaspaceSize=768m -XX:NewSize=1536m -XX:SurvivorRatio=7 -Dignore.endorsed.dirs= -classpath /opt/liferay/tomcat/bin/bootstrap.jar:/opt/liferay/tomcat/bin/tomcat-juli.jar -Dcatalina.base=/opt/liferay/tomcat -Dcatalina.home=/opt/liferay/tomcat -Djava.io.tmpdir=/opt/liferay/tomcat/temp org.apache.catalina.startup.Bootstrap start
+     1237 liferay   0:00 ps
+
+There are some interesting information here:
+
+* First process is in charge of running the entry point.
 
 What if container ports are not exposed?
 ----------------------------------------
+All examples so far deal with containers which expose ports to the host machine. This is a convenience mechanism to *borrow* host machine ports and dedicate them to forward traffic to the container. That's great for dev environments as it allows to use localhost as if it were the container IP address.
+
+In other cases, containers may not expose their ports. This does not mean that liferay server can't be accessed, it just means that one has to use the container hostname or IP address to connect to it, rather than "localhost" or any local IP address assigned to the host machine networking system.
+
+Effectively, docker manipulates host networking system to create the necessary rules (such as name resolution) in a way that container can be accessed as if it were a completely separate machine.
+
+Let's illustrate this
 
 What if I don't want an interactive container?
 ----------------------------------------------
 No problem!, docker provides commands to interact with running containers, no matter if they're started in an interactive way or not.
-
-Naming containers
-=================
-
 
 Stopping the containers
 =======================
