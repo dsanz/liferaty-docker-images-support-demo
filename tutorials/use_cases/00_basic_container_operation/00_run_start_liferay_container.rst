@@ -19,9 +19,9 @@ Let's try the simplest command to run a Liferay container. Open a terminal windo
 
 Running this has some effects on your system. Usually, one is not aware of such machinery as is it all condensed into a single docker command. Under the hoods, this is what happens:
 
-1. If the image is not available locally, it will be pulled from the repository so that docker engine can use it. This happens once for each image.
-2. A new container is created. This entails adding a writable layer on top of the image filesystem, attaching network to it, giving the container a name, an internal id,and some other things.
-3. Then, the container is started, which means that its entry point is run. Entry point is responsible of running tomcat bundle and other stuff.
+1. If the image is not available locally, it will be **pulled** from the repository so that docker engine can use it. This happens once for each image.
+2. A **new container** is created. This entails adding a writable layer on top of the image filesystem, attaching network to it, giving the container a name, an internal id,and some other things.
+3. Then, the container is started, which means that its **entry point** logic is run. Entry point is provided by the image and is responsible of running tomcat bundle and other stuff.
 
 Your terminal window will show some image-specific logs, then the more familiar liferay startup logs. While server boots up, please take a moment to read about the meaning of the command flags you just typed:
 
@@ -93,7 +93,7 @@ As detailed in  `liferay image versions and traceability <https://grow.liferay.c
 
 To better understand what follows, please bear in mind that:
 
-* Liferay images come with `a few software <https://grow.liferay.com/people/Liferay+Official+image+contents>`_ besides the liferay bundle. More specifically, images contain some utility scripts and come with some default configurations.
+* Liferay images come with `a few software <https://grow.liferay.com/people/Liferay+Official+image+contents>`_ besides the liferay bundle. More specifically, images contain some utility scripts (most notably, the image's *entry point*) and come with some default configurations.
 * For a given liferay version, several images are pushed to the repository. In this process:
 
  * Each new image is pushed with a new timestamp.
