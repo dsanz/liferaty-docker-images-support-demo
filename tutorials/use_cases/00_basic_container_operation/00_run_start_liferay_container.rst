@@ -37,7 +37,7 @@ Let's stop the container by hitting ``Ctrl+C`` in your terminal window.
 
 How do I communicate with the container?
 ========================================
-Although container is running in your machine, you don't have direct access to the container filesystem as it is managed by the docker engine. In addition, commands you run in your machine do not affect the container at all. As a result, the way one interacts with the liferay container changes a little bit as compared to a traditional setting.
+Although container is running in your machine, you don't have direct access to the container filesystem as it is managed by the docker engine. In addition, regular commands you run in your machine do not affect the container at all. As a result, the way one interacts with the liferay container changes a little bit as compared to a traditional setting.
 
 We may use a variety of ways to communicate with the container:
 
@@ -49,7 +49,7 @@ Following subsections explore some of the above options. You'll see how all the 
 
 How to refer to the container?
 ------------------------------
-When a container is created, docker gives it an unique Id, also called the container name. This name can be provided by the user when running the container for the first time (``--name`` option in ``docker run``), as follows:
+When a container is created, docker gives it an unique Id. It also assigns a name to it, which is (somehow) random if you don't specify one. Although it's perfectly fine to use the id, it's hard to memorize, so you may want to use its name. Moreover, it's possible to give a name when running the container for the first time, as follows:
 
 .. code-block:: bash
 
@@ -114,7 +114,7 @@ Let's take a look to which images do you have in your docker engine. Let's kindl
     REPOSITORY          TAG                 DIGEST                                                                    IMAGE ID            CREATED             SIZE
     liferay/dxp         7.2.10-dxp-4        sha256:40d5b9869285d761872f1cc29bf47b442e57cdda12dec6b3777f6167594d9290   941328315cb7        2 months ago        1.19GB
 
-If you go to the liferay/dxp repository, and `filter by tag <https://hub.docker.com/r/liferay/dxp/tags?page=1&name=7.2.10-dxp-4>`_, you'll see that there are a bunch of dxp-4 images. But only one has the `40d5b9` digest, corresponding to the `2020-03-23 timestamp <https://hub.docker.com/layers/liferay/dxp/7.2.10-dxp-4-202003230112/images/sha256-40d5b9869285d761872f1cc29bf47b442e57cdda12dec6b3777f6167594d9290?context=explore>`_. This means that you pulled the image between march, 23\ :sup:`rd`\  and march, 24\ :sup:`th`\ . In that time window, latest image (tagged with liferay/dxp:7.2.10-dxp-4) was pointing to that one. Right after march, 24\ :sup:`th`\ image was released, latest no longer pointed to the old one. Same liferay version, different logic in the build/utility scripts!
+If you go to the liferay/dxp repository, and `filter by tag <https://hub.docker.com/r/liferay/dxp/tags?page=1&name=7.2.10-dxp-4>`_, you'll see that there are a bunch of dxp-4 images. But only one has the `40d5b9` digest, corresponding to the `2020-03-23 timestamp <https://hub.docker.com/layers/liferay/dxp/7.2.10-dxp-4-202003230112/images/sha256-40d5b9869285d761872f1cc29bf47b442e57cdda12dec6b3777f6167594d9290?context=explore>`_. This means that you pulled the image between march, 23\ :sup:`rd`\  and march, 24\ :sup:`th`\ . In that time window, latest image (tagged with liferay/dxp:7.2.10-dxp-4) was pointing to that one. Right after march, 24\ :sup:`th`\  image was released, latest no longer pointed to the old one. Same liferay version, different logic in the build/utility scripts!
 
 We're eager to help our customer, so first of all, let's pull the same image again:
 
@@ -223,7 +223,7 @@ Finally, we can delete the image:
 
 You can always pull it again by providing the full timestamp or the digest.
 
-Finally, you can use ``-rm`` flag when creating a container so that it will be destroyed upon stop. This way
+Finally, you can use ``-rm`` flag when creating a container so that it will be destroyed upon stop.
 
 Let's review the takeaways so far:
 
