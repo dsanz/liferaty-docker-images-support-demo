@@ -20,8 +20,8 @@ Let's try the simplest command to run a Liferay container. Open a terminal windo
 Running this has some effects on your system. Usually, one is not aware of such machinery as is it all condensed into a single docker command. Under the hoods, this is what happens:
 
 1. If the image is not available locally, it will be **pulled** from the repository so that docker engine can use it. This happens once for each image.
-2. A **new container** is created. This entails adding a writable layer on top of the image filesystem, attaching network to it, giving the container a name, an internal id,and some other things.
-3. Then, the container is started, which means that its **entry point** logic is run. Entry point is provided by the image and is responsible of running tomcat bundle and other stuff.
+2. A **new container** is created. This entails adding a writable layer on top of the image filesystem, attaching network to it, giving the container a name, an internal id, and some other things.
+3. Then, the container is started, which means that actual resources (such as memory and CPU) are allocated for the new process, and then its **entry point** logic is run. Entry point is provided by the image and is responsible of running tomcat bundle and other stuff.
 
 Your terminal window will show some image-specific logs, then the more familiar liferay startup logs. While server boots up, please take a moment to read about the meaning of the command flags you just typed:
 
