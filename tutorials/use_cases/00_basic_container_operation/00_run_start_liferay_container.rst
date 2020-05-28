@@ -112,7 +112,7 @@ No problem!, docker provides commands to interact with running containers, no ma
 
 How to run commands in the container?
 =====================================
-It's possible to exeute commands in the container, meaning run any available command in the container's operating system. This is achieved by running the ``docker exec`` command in the host machine. As you may guess, this has a big potential, which we'll illustrate here.
+It's possible to execute commands in the container, meaning run any available command in the container's operating system. This is achieved by running the ``docker exec`` command in the host machine. As you may guess, this has a big potential, which we'll illustrate here.
 
 Let's start by running a very simple, yet illustrative command to get the current working directory in the container:
 
@@ -158,6 +158,7 @@ You just saw how parameters can be passed to the command, however, the standard 
 The above command is trying to send the -3 signal to the process running the JVM in the container, in order to have it send a thread dump to the JVM standard output. The logic is:
 
 * ``pgrep -f tomcat`` outputs the pid of the system process(es) which command contains the string "tomcat". That's a bit tricky, because at the moment we invoke it in the liferay container, there are 2 matching processes:
+
     * The process running tomcat. As we saw earlier, that is the process with pid 8.
     * The process running the ``pgrep``, which includes "tomcat" in its args
 * We add the ``-o`` option to pgrep to only show the older pid, which for sure is the tomcat one.
