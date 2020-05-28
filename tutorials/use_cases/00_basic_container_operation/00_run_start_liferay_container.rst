@@ -177,7 +177,7 @@ So how do we ensure that piping is happening in the container? We need to send t
 
 This is running the bash interpreter and instructing it to run a command. All of that command (including the pipe) happens now in the container.
 
-A similar thing happens in the case of using other shell features like environmente variables and command substitution. We must ensure we're using the variable value in the container and the command substitution takes place in the container too. Let's illustrate this in the following bonus exercises.
+A similar thing happens in the case of using other shell features like **environment variables** and **command substitution**. We must ensure we're using the variable value in the container and the command substitution takes place in the container too. Let's illustrate this in the following bonus exercises.
 
 **Bonus exercise 1**. Explain why these two commands return different things
 
@@ -230,9 +230,9 @@ To better understand what follows, please bear in mind that:
 * Liferay images come with `a few software <https://grow.liferay.com/people/Liferay+Official+image+contents>`_ besides the liferay bundle. More specifically, images contain some utility scripts (most notably, the image's *entry point*) and come with some default configurations.
 * For a given liferay version, several images are pushed to the repository. In this process:
 
- * Each new image is pushed with a new timestamp.
- * Even if the liferay bundled in it is the same, the utility scripts and/or default configs may differ.
- * A new image without a timestamp is pushed, pointing to the one with the latest timestamp.
+  * Each new image is pushed with a new timestamp.
+  * Even if the liferay bundled in it is the same, the utility scripts and/or default configs may differ.
+  * A new image without a timestamp is pushed, pointing to the one with the latest timestamp.
 
 * When running a container, docker engine will not pull an image if it's already available locally
 
