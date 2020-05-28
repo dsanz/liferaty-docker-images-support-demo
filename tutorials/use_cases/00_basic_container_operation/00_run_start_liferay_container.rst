@@ -123,11 +123,10 @@ Let's start by running a very simple, yet illustrative command to get the curren
 
 As you can see, the returned value is the container's working directory, and not the host's one.
 
+The above command just returns control to the host machine, in other words, it's not interactive. We can have more advanced scenarios which may be quite useful to troubleshoot issues. Following subsections describe the most common ones.
 
-The above command just returned control to the host machine, i.e., it's not interactive. We can however pass parameters to the command or even pipe into the command stdin, however, this is a bit tricky as we'll see.
-
-Passing parameters to the command
----------------------------------
+Passing parameters to the command: how to get the container process list
+------------------------------------------------------------------------
 If your command needs parameters, just append them to the docker exec invocation. Let's ask the process list of the container with some specific fields:
 
 .. code-block:: bash
@@ -147,8 +146,8 @@ There are some interesting information here:
 * Fourth process is the ps command we just ran from the host via ``docker exec``. As you can see, it contains all the arguments you passed to it
 * All processes are owned by ``liferay`` user
 
-Piping into container's command: taking a thread dump
------------------------------------------------------
+Piping into container's command: how to take a thread dump
+----------------------------------------------------------
 You just saw how parameters can be passed to the command, however, the standard piping mechanisms are still governed by the host's operating system. Let us illustrate this with the command we'd use to take a thread dump:
 
 .. code-block:: bash
@@ -203,7 +202,6 @@ Explain why, even if we are delimiting the full command to execute in the contai
 
     $ docker exec liferay-dxp bash -c 'pgrep -of tomcat | xargs kill -3'
     $ docker exec liferay-dxp bash -c "pgrep -of tomcat | xargs kill -3"
-
 
 
 Running an interactive shell into the container
