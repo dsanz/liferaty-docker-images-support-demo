@@ -65,7 +65,6 @@ By default, these commands show running containers. If you're fast enough, you'l
 .. code-block:: bash
 
     $ docker ps
-
     CONTAINER ID        IMAGE                      COMMAND                  CREATED             STATUS                             PORTS                                                   NAMES
     a7735acbee48        liferay/dxp:7.2.10-dxp-4   "/bin/sh -c /usr/loc…"   27 seconds ago      Up 26 seconds (health: starting)   8000/tcp, 8009/tcp, 11311/tcp, 0.0.0.0:8080->8080/tcp   liferay-dxp
 
@@ -87,41 +86,131 @@ After some time, container should become healthy. Please note that liferay may b
 
 If you have more than one container running, you'll have to pay attention to which one you're interested in. You can also filter the listing a little bit with the ``-f`` flag as it will be shown in `Keeping your house clean: removing images and containers`_.
 
-Can I run commands in the container?
-------------------------------------
-Yes. Here, running commands mean run any available command in the container's operating system. This is achieved by running the ``docker exec`` command in the host machine. As you may guess, this has a big potential, which we'll illustrate here.
-
-Let's start by asking the process list of the container:
-
-.. code-block:: bash
-
-    $ docker exec liferay-dxp ps
-    PID   USER     TIME  COMMAND
-        1 liferay   0:00 {liferay_entrypo} /bin/bash /usr/local/bin/liferay_entrypoint.sh
-        7 liferay   0:00 {start_liferay.s} /bin/bash /usr/local/bin/start_liferay.sh
-        8 liferay   4:13 /usr/lib/jvm/zulu8/bin/java -Djava.util.logging.config.file=/opt/liferay/tomcat/conf/logging.properties -Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager -Djdk.tls.ephemeralDHKeySize=2048 -Djava.protocol.handler.pkgs=org.apache.catalina.webresources -Dorg.apache.catalina.security.SecurityListener.UMASK=0027 -Dfile.encoding=UTF-8 -Djava.locale.providers=JRE,COMPAT,CLDR -Djava.net.preferIPv4Stack=true -Duser.timezone=GMT -Xms2560m -Xmx2560m -XX:MaxNewSize=1536m -XX:MaxMetaspaceSize=768m -XX:MetaspaceSize=768m -XX:NewSize=1536m -XX:SurvivorRatio=7 -Dignore.endorsed.dirs= -classpath /opt/liferay/tomcat/bin/bootstrap.jar:/opt/liferay/tomcat/bin/tomcat-juli.jar -Dcatalina.base=/opt/liferay/tomcat -Dcatalina.home=/opt/liferay/tomcat -Djava.io.tmpdir=/opt/liferay/tomcat/temp org.apache.catalina.startup.Bootstrap start
-     1237 liferay   0:00 ps
-
-There are some interesting information here:
-
-* First process is in charge of running the entry point.
-* Second process is a script aimed at starting the tomcat
-* Third process is the JVM running tomcat
-* Fourth process is the ps command we just ran from the host via ``docker exec``
-
-What if container ports are not exposed?
-----------------------------------------
+What if container ports are not exposed? Getting the container's IP
+-------------------------------------------------------------------
 All examples so far deal with containers which expose ports to the host machine. This is a convenience mechanism to *borrow* host machine ports and dedicate them to forward traffic to the container. That's great for dev environments as it allows to use localhost as if it were the container IP address.
 
 In other cases, containers may not expose their ports. This does not mean that liferay server can't be accessed, it just means that one has to use the container hostname or IP address to connect to it, rather than "localhost" or any local IP address assigned to the host machine networking system.
 
 Effectively, docker manipulates host networking system to create the necessary rules (such as name resolution) in a way that container can be accessed as if it were a completely separate machine.
 
-Let's illustrate this
+Let's find out what's the container's IP address. There are several ways to do this, we'll use the command ``docker inspect``, which shows detailed information about a container. As we're interested in the IP address only, we'll filter out the output a little bit:
+
+.. code-block:: bash
+
+    $ docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' liferay-dxp
+    172.17.0.3
+
+Now, run this command in your machine and type http://<IP address>:8080 in your browser.
+
+A last note: a container may have more than one network attached. In this case, it is not guaranteed that all of the available IPs will accept connections.
 
 What if I don't want an interactive container?
 ----------------------------------------------
 No problem!, docker provides commands to interact with running containers, no matter if they're started in an interactive way or not.
+
+
+How to run commands in the container?
+=====================================
+It's possible to exeute commands in the container, meaning run any available command in the container's operating system. This is achieved by running the ``docker exec`` command in the host machine. As you may guess, this has a big potential, which we'll illustrate here.
+
+Let's start by running a very simple, yet illustrative command to get the current working directory in the container:
+
+.. code-block:: bash
+
+    $ docker exec liferay-dxp pwd
+    /opt/liferay
+
+As you can see, the returned value is the container's working directory, and not the host's one.
+
+
+The above command just returned control to the host machine, i.e., it's not interactive. We can however pass parameters to the command or even pipe into the command stdin, however, this is a bit tricky as we'll see.
+
+Passing parameters to the command
+---------------------------------
+If your command needs parameters, just append them to the docker exec invocation. Let's ask the process list of the container with some specific fields:
+
+.. code-block:: bash
+
+    $ docker exec liferay-dxp ps -o pid,ppid,user,args
+    PID   PPID  USER     COMMAND
+        1     0 liferay  {liferay_entrypo} /bin/bash /usr/local/bin/liferay_entrypoint.sh
+        7     1 liferay  {start_liferay.s} /bin/bash /usr/local/bin/start_liferay.sh
+        8     7 liferay  /usr/lib/jvm/zulu8/bin/java -Djava.util.logging.config.file=/opt/liferay/tomcat/conf/logging.properties -Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager -Djdk.tls.ephemeralDHKeySize=2048 -Djava.protocol.handler.pkgs=org.apache.catalina.webresources -Dorg.apache.catalina.security.SecurityListener.UMASK=0027 -Dfile.encoding=UTF-8 -Djava.locale.providers=JRE,COMPAT,CLDR -Djava.net.preferIPv4Stack=true -Duser.timezone=GMT -Xms2560m -Xmx2560m -XX:MaxNewSize=1536m -XX:MaxMetaspaceSize=768m -XX:MetaspaceSize=768m -XX:NewSize=1536m -XX:SurvivorRatio=7 -Dignore.endorsed.dirs= -classpath /opt/liferay/tomcat/bin/bootstrap.jar:/opt/liferay/tomcat/bin/tomcat-juli.jar -Dcatalina.base=/opt/liferay/tomcat -Dcatalina.home=/opt/liferay/tomcat -Djava.io.tmpdir=/opt/liferay/tomcat/temp org.apache.catalina.startup.Bootstrap start
+    13992     0 liferay  ps -o pid,ppid,user,args
+
+There are some interesting information here:
+
+* First process (pid 1) is in charge of running the entry point. It's the first process run by the container.
+* Second process (pid 7) is a script aimed at starting the tomcat. We know this is a child process of the entry point (ppid is 1)
+* Third process (pid 8) is the JVM running tomcat, which was in turn launched from the process with pid 7
+* Fourth process is the ps command we just ran from the host via ``docker exec``. As you can see, it contains all the arguments you passed to it
+* All processes are owned by ``liferay`` user
+
+Piping into container's command: taking a thread dump
+-----------------------------------------------------
+You just saw how parameters can be passed to the command, however, the standard piping mechanisms are still governed by the host's operating system. Let us illustrate this with the command we'd use to take a thread dump:
+
+.. code-block:: bash
+
+    $ docker exec liferay-dxp pgrep -of tomcat | xargs kill -3
+    kill: (8): Operation not permitted
+
+The above command is trying to send the -3 signal to the process running the JVM in the container, in order to have it send a thread dump to the JVM standard output. The logic is:
+
+* ``pgrep -f tomcat`` outputs the pid of the system process(es) which command contains the string "tomcat". That's a bit tricky, because at the moment we invoke it in the liferay container, there are 2 matching processes:
+    * The process running tomcat. As we saw earlier, that is the process with pid 8.
+    * The process running the ``pgrep``, which includes "tomcat" in its args
+* We add the ``-o`` option to pgrep to only show the older pid, which for sure is the tomcat one.
+* Then we pipe that pid number to the xargs, which transforms it into a regular parameter to what comes next: ``kill -3`` will therefore become ``kill -3 8``
+
+However, we got an error and the thread dump is not being shown. What went wrong here?
+
+The answer relies on *who* is running the kill command. One may think that it's being run by the container. However, above invocation makes the **host** to run the kill command. So you're basically trying to kill the process with pid 8 in the host, not in the container, hence the ``Operation not permitted`` error.
+
+So how do we ensure that piping is happening in the container? We need to send the entire command with the piping to the next command, to the container. We can do that if we ask the container to run an shell interpreter and pass everything to the interpreter, as follows:
+
+.. code-block:: bash
+
+    $ docker exec liferay-dxp bash -c 'pgrep -of tomcat | xargs kill -3'
+
+This is running the bash interpreter and instructing it to run a command. All of that command (including the pipe) happens now in the container.
+
+A similar thing happens in the case of using other shell features like environmente variables and command substitution. We must ensure we're using the variable value in the container and the command substitution takes place in the container too. Let's illustrate this in the following bonus exercises.
+
+**Bonus exercise 1**. Explain why these two commands return different things
+
+.. code-block:: bash
+
+    $ docker exec liferay-dxp bash -c 'echo $JAVA_HOME'
+
+and
+
+.. code-block:: bash
+
+    $ docker exec liferay-dxp echo $JAVA_HOME
+
+**Bonus exercise 2**. Perhaps you noticed we used xargs to provide the pid to the kill command above, and wondered why do not send it directly, with a command substitution like ``kill -3 $(pgrep -of tomcat)``.
+Explain why, even if we are delimiting the full command to execute in the container, results of the first pair of commands are different, whereas results of the second pair of commands is the same:
+
+.. code-block:: bash
+
+    $ docker exec liferay-dxp bash -c 'kill -3 $(pgrep -of tomcat)'
+    $ docker exec liferay-dxp bash -c "kill -3 $(pgrep -of tomcat)"
+
+
+.. code-block:: bash
+
+    $ docker exec liferay-dxp bash -c 'pgrep -of tomcat | xargs kill -3'
+    $ docker exec liferay-dxp bash -c "pgrep -of tomcat | xargs kill -3"
+
+
+
+Running an interactive shell into the container
+-----------------------------------------------
+
+The above is still non interactive
+
 
 Stopping the containers
 =======================
