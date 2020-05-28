@@ -3,7 +3,7 @@ Basic Container Operation
 
 This tutorial will guide you through some basic operations that one can do with a docker container. We'll use Liferay images to illustrate, but keep in mind that this is valid for any docker image. This tutorial assumes that docker ce is installed in your system. Please refer to `Docker 101 - setup <https://grow.liferay.com/share/Docker+101+-+Setup>`_ for details.
 
-You'll learn some concepts and how-tos. Particularly, how to run a container, how to stop it, the difference between attached and detached containers, what is "expose a port" and how to select the right 'latest' image to use, among other things.
+You'll learn some concepts and how-tos. For instance, how to run a container, how to stop it, what is the difference between attached and detached containers, what is "expose a port", how to select the right 'latest' image to use, or how to run commands in the containers to do things like taking a thread dump of the liferay server running in the container.
 
 .. contents::
 
