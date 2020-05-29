@@ -25,7 +25,9 @@ Running this has some effects on your system. Usually, one is not aware of such 
 
 Your terminal window will show some image-specific logs, then the more familiar liferay startup logs. While server boots up, please take a moment to read about the meaning of the command flags you just typed:
 
-* The ``-it`` flags make the container *interactive*. For Liferay containers, this means that you can stop the container by hitting Ctrl+C. This is a convenient mechanism for development/learning purposes, but it's not necessary at all for our customers in general.
+.. _`-it flags`:
+
+*  The ``-it`` flags make the container *interactive*. For Liferay containers, this means that you can stop the container by hitting Ctrl+C. This is a convenient mechanism for development/learning purposes, but it's not necessary at all for our customers in general.
 * The ``-p`` flag *publishes* the ports exposed by the container to the host machine. There are many options here, but in this form, port 8080 on your machine will be forwarded to the port 8080 on the container. This way, you don't need to know what is the container IP address to reach tomcat.
 
 Time to access Liferay dxp. Open the browser of your choice and type
@@ -92,7 +94,7 @@ All examples so far deal with containers which expose ports to the host machine.
 
 In other cases, containers may not expose their ports. This does not mean that liferay server can't be accessed, it just means that one has to use the container hostname or IP address to connect to it, rather than "localhost" or any local IP address assigned to the host machine networking system.
 
-Effectively, docker manipulates host networking system to create the necessary rules (such as name resolution) in a way that container can be accessed as if it were a completely separate machine.
+Effectively, docker manipulates host networking system to create the necessary elements (such as network interfaces) and rules (such as routing rules) in a way that container can be accessed as if it were a completely separate machine. Indeed, in a multi-container setting, containers see each other thanks to how docker manages the networking.
 
 Let's find out what's the container's IP address. There are several ways to do this, we'll use the command ``docker inspect``, which shows detailed information about a container. As we're interested in the IP address only, we'll filter out the output a little bit:
 
@@ -101,13 +103,31 @@ Let's find out what's the container's IP address. There are several ways to do t
     $ docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' liferay-dxp
     172.17.0.3
 
-Now, run this command in your machine and type http://<IP address>:8080 in your browser.
+Now, run this command in your machine and type ``http://<IP address>:8080`` in your browser.
 
 A last note: a container may have more than one network attached. In this case, it is not guaranteed that all of the available IPs will accept connections.
 
-What if I don't want an interactive container?
-----------------------------------------------
-No problem!, docker provides commands to interact with running containers, no matter if they're started in an interactive way or not.
+What if container is not interactive? How to get liferay logs
+-------------------------------------------------------------
+So far, we started the containers with the `-it flags`_. Together, both flags allow you to send what you write in the host terminal console to the container's entry point process standard input, including the signal sent upon Ctrl+C key press.
+
+The above is just a flavor of the **attached** mode. In this mode, container's main process runs in the **foreground**, so there is some connection between the container standard input, output and error streams and the host terminal console. This is why, by default, you'll see the standard output of the process printed in the host console. That's the easiest way to examine liferay container logs. The addition of ``-it`` flags adds more interactiveness to the attached mode.
+
+Containers can be run without any connection with the host console. This is called **detached** mode. In detached mode, container process is run in the **background**, so its standard input, output and error streams are not accessible from via host console.
+
+But, what if your customer runs the containers in the background? How to get access to the logs? How to type in the container? How to stop it? No problem!, docker provides commands to interact with running containers, no matter if they're started in an interactive way or not.
+
+In this section, we'll learn how to get the liferay logs if the container is detached. Different mechanisms will be provided to illustrate, which work both for foreground and background containers.
+
+If you're interested in reading the logs, then you can use the dedicated docker command:
+
+.. code-block:: bash
+
+    $ docker logs liferay-dxp
+
+This will ouput all logs produced by the container so far. Nice options are ``-t`` (adds timestamps) and ``-f`` follows printing logs after invoking the command.
+
+
 
 
 How to run commands in the container?
