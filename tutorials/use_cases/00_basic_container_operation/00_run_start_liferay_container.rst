@@ -58,7 +58,7 @@ When a container is created, docker gives it an unique Id. It also assigns a nam
 
     docker run --name liferay-dxp -it -p 8080:8080 liferay/dxp:7.2.10-dxp-4
 
-This creates and runs a container named ``liferay-dxp`` with the latest available release. We'll talk about what ``latest`` mean later on.
+This creates and runs a container named ``liferay-dxp`` with the latest available release. We'll talk `About latest image`_ later on.
 
 Let's inquire the docker engine the list of running containers. You should know that there are 2 equivalent commands for this purpose: ``docker ps`` and ``docker container ls``.
 
