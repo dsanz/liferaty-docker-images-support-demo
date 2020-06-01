@@ -109,7 +109,9 @@ A last note: a container may have more than one network attached. In this case, 
 
 What if container is not interactive? → Getting liferay logs
 ------------------------------------------------------------
-So far, we started the containers with the `-it flags`_. Together, both flags allow you to send what you write in the host terminal console to the container's entry point process standard input, including the signal sent upon Ctrl+C key press.
+So far, we started the containers with the `-it flags`_. Together, both flags allow you to send what you write in the host terminal console to the container's entry point process standard input, including the signal sent upon ``Ctrl+C`` key press. However, please note that liferay container's entry point is not making use of its standard input, so anything you type (except key sequences which generate signals, such as ``Ctrl+C``) will be ignored.
+
+.. foreground:
 
 The above is just a flavor of the **attached** mode. In this mode, container's main process runs in the **foreground**, so there is some connection between the container standard input, output and error streams and the host terminal console. This is why, by default, you'll see the standard output of the process printed in the host console. That's the easiest way to examine liferay container logs. The addition of ``-it`` flags adds more interactiveness to the attached mode.
 
@@ -148,6 +150,8 @@ Other possibility to see the logs, specially if you want to trace them just for 
     $ docker attach --sig-proxy=false  liferay-dxp
 
 This attaches your terminal’s standard input, output, and error to the running container. If you don't see any output, that's fine: container may not be outputting any data at this moment. We use ``--sig-proxy=false`` to make sure this command does not send signals to the container, so that ``Ctrl-C`` will be used to quit ´´docker attach`` command rather than being sent as a termination signal to the container.
+
+At this moment, you can choose to keep this container running and do the rest of the tutorial. In case you prefer the interactive container, please see `Stopping the container`_ to stop it, delete it and run it again in the foreground. Don't forget to add the ``-it`` flags.
 
 There are more advanced ways to read portal logs, but those require running commands into the container.
 
@@ -198,17 +202,16 @@ You just saw how parameters can be passed to the command, however, the standard 
 
 The above command is trying to send the -3 signal to the process running the JVM in the container, in order to have it send a thread dump to the JVM standard output. The logic is:
 
-* ``pgrep -f tomcat`` outputs the pid of the system process(es) which command contains the string "tomcat". That's a bit tricky, because at the moment we invoke it in the liferay container, there are 2 matching processes:
+* ``pgrep -of tomcat`` outputs the pid of the system process(es) which command contains the string "tomcat". The ``-o`` option instructs pgrep to only show the older pid. We need it as, at the moment we invoke it in the liferay container, there are 2 matching processes. :
 
   * The process running tomcat. As we saw earlier, that is the process with pid 8.
-  * The process running the ``pgrep``, which includes "tomcat" in its args
+  * The process running the ``pgrep`` itself, which includes "tomcat" in its args
 
-* We add the ``-o`` option to pgrep to only show the older pid, which for sure is the tomcat one.
 * Then we pipe that pid number to the xargs, which transforms it into a regular parameter to what comes next: ``kill -3`` will therefore become ``kill -3 8``
 
 However, we got an error and the thread dump is not being shown. What went wrong here?
 
-The answer relies on *who* is running the kill command. One may think that it's being run by the container. However, above invocation makes the **host** to run the kill command. So you're basically trying to kill the process with pid 8 in the host, not in the container, hence the ``Operation not permitted`` error.
+The answer relies on *who* is running the kill command. One may think that it's being run by the container. However, above invocation makes the host to run the kill command. So you're basically **trying to kill the process with pid 8 in the host, not in the container**, hence the ``Operation not permitted`` error.
 
 So how do we ensure that piping is happening in the container? We need to send the entire command with the piping to the next command, to the container. We can do that if we ask the container to run an shell interpreter and pass everything to the interpreter, as follows:
 
