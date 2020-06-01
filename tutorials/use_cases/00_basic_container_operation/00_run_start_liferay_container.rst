@@ -50,8 +50,8 @@ We may use a variety of ways to communicate with the container:
 
 Following subsections explore some of the above options. Others will be described in subsequent tutorials. You'll see how all the Liferay images use cases have to do with one or more of the above mechanisms.
 
-How to refer to the container?
-------------------------------
+How to refer to the container? → Naming containers and getting the id
+---------------------------------------------------------------------
 When a container is created, docker gives it an unique Id. It also assigns a name to it, which is (somehow) random if you don't specify one. Although it's perfectly fine to use the id, it's hard to memorize, so you may want to use its name. Moreover, it's possible to give a name when running the container for the first time, as follows:
 
 .. code-block:: bash
@@ -72,8 +72,8 @@ By default, these commands show running containers. If you're fast enough, you'l
 
 In this example, you may refer to this container either by giving its id (``a7735acbee48``) or its name (``liferay-dxp``). An use case where the container id/name needs to be specified is when running docker commands affecting your container.
 
-How to know if container is running?
-------------------------------------
+How to know if container is running? → Checking container's health
+------------------------------------------------------------------
 Output of previous command shown that container status is "up" and the health indicator says ``starting``. We'll not cover that in this tutorial, so for now just keep in mind that the automatic checks that docker executes to determine what's the status of the container have not started yet. By default, these checks wait for 1 minute to give time to the tomcat to start up Liferay DXP.
 
 We're primarily interested in knowing the status of the running container, and perhaps some additional information such as the published ports or even the image container is using.
@@ -88,8 +88,8 @@ After some time, container should become healthy. Please note that liferay may b
 
 If you have more than one container running, you'll have to pay attention to which one you're interested in. You can also filter the listing a little bit with the ``-f`` flag as it will be shown in `Keeping your house clean: removing images and containers`_.
 
-What if container ports are not exposed? Getting the container's IP
--------------------------------------------------------------------
+What if container ports are not exposed? → Getting the container's IP
+---------------------------------------------------------------------
 All examples so far deal with containers which expose ports to the host machine. This is a convenience mechanism to *borrow* host machine ports and dedicate them to forward traffic to the container. That's great for dev environments as it allows to use localhost as if it were the container IP address.
 
 In other cases, containers may not expose their ports. This does not mean that liferay server can't be accessed, it just means that one has to use the container hostname or IP address to connect to it, rather than "localhost" or any local IP address assigned to the host machine networking system.
@@ -107,8 +107,8 @@ Now, run this command in your machine and type ``http://<IP address>:8080`` in y
 
 A last note: a container may have more than one network attached. In this case, it is not guaranteed that all of the available IPs will accept connections.
 
-What if container is not interactive? How to get liferay logs
--------------------------------------------------------------
+What if container is not interactive? → Getting liferay logs
+------------------------------------------------------------
 So far, we started the containers with the `-it flags`_. Together, both flags allow you to send what you write in the host terminal console to the container's entry point process standard input, including the signal sent upon Ctrl+C key press.
 
 The above is just a flavor of the **attached** mode. In this mode, container's main process runs in the **foreground**, so there is some connection between the container standard input, output and error streams and the host terminal console. This is why, by default, you'll see the standard output of the process printed in the host console. That's the easiest way to examine liferay container logs. The addition of ``-it`` flags adds more interactiveness to the attached mode.
