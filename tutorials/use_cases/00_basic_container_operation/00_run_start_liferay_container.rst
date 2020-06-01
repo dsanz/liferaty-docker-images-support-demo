@@ -225,11 +225,6 @@ A similar thing happens in the case of using other shell features like **environ
 .. code-block:: bash
 
     $ docker exec liferay-dxp bash -c 'echo $JAVA_HOME'
-
-and
-
-.. code-block:: bash
-
     $ docker exec liferay-dxp echo $JAVA_HOME
 
 **Bonus exercise 2**. Perhaps you noticed we used xargs to provide the pid to the kill command above, and wondered why do not send it directly, with a command substitution like ``kill -3 $(pgrep -of tomcat)``.
@@ -255,6 +250,47 @@ The above is still non interactive
 
 Stopping the containers
 =======================
+We've seen that' for containers running in the foreground_ and with the ``-it`` flags, we can stop it by just pressing ``Ctrl-C``. Though nice and convenient, most of the customer installations will make use of orchestrators which manage and run containers in the background. So all we have is a container id and a docker engine to manage the container.
+
+Let's now stop the container. As it is running in detached mode, we have to send the stop signal to the container via command. This works both for foreground and background: containers:
+
+.. code-block:: bash
+
+    $ docker container stop liferay-dxp
+
+This command, which can be shortened to ``docker stop``, tells the entry point to stop by sending it a SIGTERM signal, then waiting for some (configurable) time. While `LPS-111439 <https://issues.liferay.com/browse/LPS-111439>`_ gets a fix, the entry point will do nothing upon this signal. That makes docker to hard kill the container after some time, sending a KILL signal which abruptly stops the entry point and all its children processes, including the tomcat. That's normally not an issue for dev purposes.
+
+However, customers may choose to stop the tomcat manually. You should know that, once tomcat stops, the entry point will try to run user-provided scripts before exiting. Being able to run them may be a good reason to avoid ``docker stop`` for containers where LPS-111439 is not fixed. Even if there's nothing to run, an ordered stop of the container is preferrable for production environments.
+
+So, let's learn how to stop the container by stopping the tomcat. All you need to know is where tomcat lives, so that you can run the stop script:
+
+.. code-block:: bash
+
+    $ docker exec liferay-dxp /opt/liferay/tomcat/bin/shutdown.sh
+
+This will work both for foreground and background containers, and will take the necessary time for the tomcat to stop.
+
+You may find examples where customer attempts to stop the tomcat, then, after some grace period, does a ``docker container stop`` or even a ``docker container kill``, which kills the entry point process immediately.
+
+What to do with an stopped container?
+-------------------------------------
+Stopped containers do exist in the docker engine, which means that the corresponding writable layer, and other runtime information, is still available. However, no processes are running within the container, so it just takes some disk space, but neither CPU nor memory.
+
+A stopped container can be **started** with the ``docker start`` command. That's not the same as **run**. Whereas ``run`` creates a brand-new container, with its pristine writeable layer and a new name/id pair, ``start`` takes a pre-existing container. In both cases, CPU and memory are allocated in the host system, then the entry point process is run. It follows that it does not make any sense to ``docker run`` an existing container
+
+.. code-block:: bash
+
+    $ docker container start liferay-dxp
+
+This command, which can be shortened to ``docker start``, takes no options. All the options you used when running it for the first time are in effect, and can't be reverted when you restart the container. This means, for example, that a detached container will remain detached when started, and so on.
+
+An stopped container can be **deleted** as follows:
+
+.. code-block:: bash
+
+    $ docker container rm liferay-dxp
+
+This command, which can be shortened to ``docker rm``, removes the writeable layer and runtime information, leaving the container name free for future reuse. Please note this does not delete the *image* which was used to create the container. Running containers can not be deleted.
 
 Which image should I use?
 =========================
