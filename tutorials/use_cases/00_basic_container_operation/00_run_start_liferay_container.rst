@@ -247,9 +247,50 @@ Explain why, even if we are delimiting the full command to execute in the contai
 
 Running an interactive shell into the container
 -----------------------------------------------
+So far we've seen container's output into our console, but we have typed nothing to be sent back to the container interactively. You may say: we've already seen the ``-it`` options which make the container ineractive right? Yes, we did, but as mentioned earlier, liferay image entry point ignores the input.
 
-The above is still non interactive
+So, can we leverage the ability to run commands in the container to have an interactive shell? Yes, we can. To better understand this, it's important to realize that we can have many terminals in our host system. Whereas one may be used to run the container's entry point, others can be use to run commands. Each terminal can *attack* the container in a different way. Indeed, that is what we have done in the examples above.
 
+As a result, we may have a container run in detached mode, and connect interactively to it to run a shell. For this to happen, please note that the *shell* itself must be available as a command in the container. Even the tiniest linux containers include a shell, and that's definitely the case of liferay containers. We've already made use of it in previous examples, instructing it to run a pipe of commands.
+
+Now let's use it interactively:
+
+.. code-block:: bash
+
+     $ docker exec -it liferay-dxp bash
+
+     liferay@0987fc380c16 /opt/liferay
+     $
+
+
+Here, the ``-it`` flags apply to this particular command invocation, not to the initial docker run command we used to start this container. This is telling the docker engine to run the bash program in the container, but attaching the standard input and output to those of the console in the host system. The result is a full fledged shell within the container.
+
+This way, we can further run any command in the shell:
+
+.. code-block:: bash
+
+    liferay@0987fc380c16 /opt/liferay
+    $ pwd
+    /opt/liferay
+
+    liferay@0987fc380c16 /opt/liferay
+    $ ps
+    PID   USER     TIME  COMMAND
+        1 liferay   0:00 {liferay_entrypo} /bin/bash /usr/local/bin/liferay_entrypoint.sh
+        7 liferay   0:00 {start_liferay.s} /bin/bash /usr/local/bin/start_liferay.sh
+        8 liferay   3:25 /usr/lib/jvm/zulu8/bin/java -Djava.util.logging.config.file=/opt/liferay/tomcat/conf/logging.properties -Djava.util.logging.manager=org.apache.juli.Cl
+      609 liferay   0:00 bash
+      705 liferay   0:00 ps
+
+As with other linux bash shells, we can exit it just by hitting ``Ctrl+D`` or typing exit:
+
+.. code-block:: bash
+
+    liferay@0987fc380c16 /opt/liferay
+    $ exit
+    exit
+
+Note that we exited the command we just run (which turns out to be *bash*) but we did not stopped the container.
 
 Stopping the containers
 =======================
