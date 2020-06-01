@@ -119,16 +119,37 @@ But, what if your customer runs the containers in the background? How to get acc
 
 In this section, we'll learn how to get the liferay logs if the container is detached. Different mechanisms will be provided to illustrate, which work both for foreground and background containers.
 
-If you're interested in reading the logs, then you can use the dedicated docker command:
+Let's first start a container in detached mode. Hit ``Ctrl+C`` to stop your existing container. As we're going to change some initial options, and we're interested in reusing container name, let's remove the container too:
+
+.. code-block:: bash
+
+    $ docker container rm liferay-dxp
+
+Now we can start it in detached mode:
+.. code-block:: bash
+
+    $ docker run -d --name liferay-dxp -p 8080:8080 liferay/dxp:7.2.10-dxp-4
+    4303ec5e48e5a98bfa0dde196a93e0b2b42eaf48539744c816e1efd4cb1ed5ef
+
+Other than the new container id, there's no other output. Entry point process standard output is not piped into console's output. That's the common scenario in case of having `container orchestration <https://grow.liferay.com/people/Liferay+Docker+Images.+Preliminary+concepts#container-orchestration-and-scaling>`_.
+
+If you're interested in reading the logs for a detached container, then you can use the dedicated docker command:
 
 .. code-block:: bash
 
     $ docker logs liferay-dxp
 
-This will ouput all logs produced by the container so far. Nice options are ``-t`` (adds timestamps) and ``-f`` follows printing logs after invoking the command.
+This will ouput all logs produced by the container so far. Nice options are ``-t`` (adds timestamps) and ``-f`` (follows printing logs after invoking the command).
 
+Other possibility to see the logs, specially if you want to trace them just for a specific period of time, is to **attach** to the container:
 
+.. code-block:: bash
 
+    $ docker attach --sig-proxy=false  liferay-dxp
+
+This attaches your terminal’s standard input, output, and error to the running container. If you don't see any output, that's fine: container may not be outputting any data at this moment. We use ``--sig-proxy=false`` to make sure this command does not send signals to the container, so that ``Ctrl-C`` will be used to quit ´´docker attach`` command rather than being sent as a termination signal to the container.
+
+There are more advanced ways to read portal logs, but those require running commands into the container.
 
 How to run commands in the container?
 =====================================
