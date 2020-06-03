@@ -128,6 +128,7 @@ Let's first start a container in detached mode. Hit ``Ctrl+C`` to stop your exis
     $ docker container rm liferay-dxp
 
 Now we can start it in detached mode:
+
 .. code-block:: bash
 
     $ docker run -d --name liferay-dxp -p 8080:8080 liferay/dxp:7.2.10-dxp-4
