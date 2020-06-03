@@ -152,7 +152,7 @@ Other possibility to see the logs, specially if you want to trace them just for 
 
 This attaches your terminal’s standard input, output, and error to the running container. If you don't see any output, that's fine: container may not be outputting any data at this moment. We use ``--sig-proxy=false`` to make sure this command does not send signals to the container, so that ``Ctrl-C`` will be used to quit ``docker attach`` command rather than being sent as a termination signal to the container.
 
-At this moment, you can choose to keep this container running and do the rest of the tutorial. In case you prefer the interactive container, please see `Stopping the container`_ to stop it, delete it and run it again in the foreground. Don't forget to add the ``-it`` flags.
+At this moment, you can choose to keep this container running and do the rest of the tutorial. In case you prefer the interactive container, please see `Stopping the containers`_ to stop it, delete it and run it again in the foreground. Don't forget to add the ``-it`` flags.
 
 There are more advanced ways to read portal logs, but those require running commands into the container.
 
