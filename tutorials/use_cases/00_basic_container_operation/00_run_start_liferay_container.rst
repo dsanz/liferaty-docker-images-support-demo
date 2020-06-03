@@ -220,9 +220,9 @@ So how do we ensure that piping is happening in the container? We need to send t
 
     $ docker exec liferay-dxp bash -c 'pgrep -of tomcat | xargs kill -3'
 
-This is running the bash interpreter and instructing it to run a command. All of that command (including the pipe) happens now in the container.
+This is running the bash interpreter and instructing it to run a command. All of that command (including the pipe) happens now in the container. Please note that this command produces tomcat to write to its standard output, not to the ``kill`` command output. Please see `Taking thread dumps of a containerized Liferay <https://grow.liferay.com/share/Gathering+Customer+Information+For+Support#taking-thread-dumps-of-a-containerized-liferay>`_ for details. As a bonus, you may try using the ``jstack`` command in the container.
 
-A similar thing happens in the case of using other shell features like **environment variables** and **command substitution**. We must ensure we're using the variable value in the container and the command substitution takes place in the container too. Let's illustrate this in the following bonus exercises.
+A similar thing happens in the case of using other shell features like **environment variables** and **command substitution**. In both cases, shell substitutes some expression by its value. We must ensure system evaluates the expressions in the context of the container. Let's illustrate this in the following bonus exercises.
 
 **Bonus exercise 1**. Explain why these two commands return different things
 
