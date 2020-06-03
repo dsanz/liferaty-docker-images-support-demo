@@ -127,7 +127,7 @@ Let's first start a container in detached mode. Hit ``Ctrl+C`` to stop your exis
 
     $ docker container rm liferay-dxp
 
-Now we can start it in detached mode:
+Now we can start it in detached mode, using the ``-d`` flag:
 
 .. code-block:: bash
 
