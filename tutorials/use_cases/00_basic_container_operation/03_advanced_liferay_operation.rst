@@ -81,7 +81,7 @@ As you can see, this stage in the lifecycle takes place in the middle of the "co
 Hooking scripts in other phases
 -------------------------------
 
-Entry point defines 3 additional hooking points for user-provided scripts. At these points, the container directory is not ``/mnt/liferay`` but ``/usr/local/liferay/scripts/``. Reason for this is to allow separation of concerns: whereas ``/mnt/liferay`` is meant to be used via mount (bind or volume), the ``/usr/local/liferay/scripts/`` directory can be populated when building a child image as well. This does not preclude doing so via mount, indded, we'll illustrate this feature using bind mounts.
+Entry point defines 3 additional hooking points for user-provided scripts. At these points, the container directory is not ``/mnt/liferay`` but ``/usr/local/liferay/scripts/``. Reason for this is to allow separation of concerns: whereas ``/mnt/liferay`` is meant to be used via mount (bind or volume), the ``/usr/local/liferay/scripts/`` directory can be populated when building a child image as well. This does not preclude doing so via mount, indeed, we'll illustrate this feature using bind mounts.
 
 The 3 additional points are ``pre-configure``, ``pre-startup`` and ``post-shutdown``:
 
