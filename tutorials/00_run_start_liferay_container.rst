@@ -41,7 +41,7 @@ Let's stop the container by hitting ``Ctrl+C`` in your terminal window.
 
 How do I communicate with the container?
 ========================================
-Although container is running in your machine, you don't have direct access to the container filesystem as it is managed by the docker engine. In addition, regular commands you run in your machine do not affect the container at all. As a result, the way one interacts with the liferay container changes a little bit as compared to a traditional setting.
+Although container is running in your machine, you **don't have direct access to the container** filesystem as it is managed by the docker engine. In addition, regular commands you run in your machine do not affect the container at all. As a result, the way one interacts with the liferay container changes a little bit as compared to a traditional setting.
 
 We may use a variety of ways to communicate with the container:
 
@@ -60,7 +60,7 @@ When a container is created, docker gives it an unique Id. It also assigns a nam
 
     docker run --name liferay-dxp -it -p 8080:8080 liferay/dxp:7.2.10-dxp-4
 
-This creates and runs a container named ``liferay-dxp`` with the latest available release. We'll talk `About latest image`_ later on.
+This creates and runs a container named ``liferay-dxp`` with the latest available release. We'll talk `About latest images`_ later on.
 
 Let's inquire the docker engine the list of running containers. You should know that there are 2 equivalent commands for this purpose: ``docker ps`` and ``docker container ls``.
 
