@@ -12,7 +12,7 @@ As you can see, there are **4 extension points** where user can hook scripts. In
 
 Hello world!
 ------------
-Let's start by providing a PoC with the following script (hello-world.sh):
+Let's start by providing a PoC with the following script (`03_files/hello-world.sh <03_files/hello-world.sh>`_):
 
 .. code-block:: bash
 
@@ -89,11 +89,16 @@ The 3 additional points are ``pre-configure``, ``pre-startup`` and ``post-shutdo
 * **Pre-startup** scripts are run after all configuration actions take place. At this point, the JVM, the tomcat and Liferay should be ready to run, meaning all configuration is in place, products are properly patched, plugins are ready to deploy at runtime, etc. Potential usages of this hook point would be to verify and log the overall configuration, cleanup unused files (e.g. zipped files, patching-tool separation, etc), verify external resource availability, or update database indexes (if patching-tool required that). Right after these scripts are run, tomcat is started.
 * **Post-shutdown** scripts are run once tomcat is stopped, before finishing the entry point process. At this point, container is about to be stopped, so goal here is to clean up. For instance, free external resources that may have been used during portal operation or clean up unused files that will make the writeable layer lighter.
 
-  To illustrate how this works, let's create and run a script to show the liferay configuration (please refer to log-liferay-config.sh, in this repo)
+  To illustrate how this works, let's create and run a script to show the liferay configuration (`03_files/pre-startup/log-liferay-config.sh <03_files/pre-startup/log-liferay-config.sh>`_). This time, we'll make the full folder available to the container.
 
- .. code-block:: bash
+#. Clone this repository if you did not do so already
+#. `cd` into the tutorials section, where this file resides.
+#. Run a new container and specify a folder bind-mount, as follows:
 
-   docker run -it -v $(pwd)/log-liferay-config.sh:/usr/local/liferay/scripts/pre-startup/log-config.sh --name liferay-dxp liferay/dxp:7.2.10-dxp-4
+   .. code-block:: bash
 
+    docker run -it -v $(pwd)/03-files/pre-startup/:/usr/local/liferay/scripts/pre-startup --name liferay-dxp liferay/dxp:7.2.10-dxp-4
+
+This is bind-mounting the full ``./03-files/pre-startup/`` folder into ``/usr/local/liferay/scripts/pre-startup`` in the container.
 
 
