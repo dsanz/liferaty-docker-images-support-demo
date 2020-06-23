@@ -26,8 +26,8 @@ The mechanism of our choice here is a `bind-mount <https://docs.docker.com/stora
 
 To do this, please:
 
-#. Download the file hello-world.sh in your laptop. You can clone this repository and use the provided one too.
-#. `cd` into the folder where you downloaded it.
+#. Download the file ``hello-world.sh`` in your laptop. You can clone this repository and use the provided one too.
+#. ``cd`` into the folder where you downloaded it.
 #. Run the container and specify the bind-mount for this file:
 
    .. code-block:: bash
@@ -52,7 +52,7 @@ To do this, please:
 
 There are some things going on here. To begin, we're using the ``-v`` option, which tells the container we want to mount something into container's local filesystem. In this case, we used a direct file mount: rather than mounting the folder, we've just made a single file mapping between the host and the container.
 
-To specify the full path of the file in the host machine, we've used ``$(pwd)/hello-world.sh``. The ``$(pwd)`` is a shell `command substitution <https://www.gnu.org/software/bash/manual/html_node/Command-Substitution.html>`_, which works by running the command (``pwd``, *print working directory* in this case) and substituting all the expression by the command output. As a result, if you downloaded the ``hello-world.sh`` file into ``/home/me/docker``, then, what docker engine receives is:
+To specify the full path of the file in the host machine, we've used ``$(pwd)/hello-world.sh``. The ``$(pwd)`` is a shell `command substitution <https://www.gnu.org/software/bash/manual/html_node/Command-Substitution.html>`_, which works by running the command (``pwd``, *print working directory* in this case) and substituting all the expression by the command output. As a result, if you downloaded the ``hello-world.sh`` file into ``/home/me/docker`` in your machine, then, what docker engine receives is:
 
 .. code-block:: bash
 
@@ -64,8 +64,36 @@ This local file ``/home/me/docker/hello-world.sh`` in the host is mounted onto t
 
   docker run --rm -it -v $(pwd)/hello-world.sh:/mnt/liferay/scripts/a.sh ...
 
-For all intents and purposes, the container will see a file called ``a.sh`` located in the ``/mnt/liferay/scripts/`` directory.
+In this case, for all purposes, the container will see a file called ``a.sh`` located in the ``/mnt/liferay/scripts/`` directory.
 
+This example hooks ``hello-world.sh`` into a specific point in the container lifecycle. When the script gets run,
+
+* The java version has already been set
+* All other files provided to ``/mnt/liferay/files`` in the container have been copied into ``$LIFERAY_HOME``
+
+However, at this point,
+
+* Artifacts have not been deployed to liferay, meaning that there is not symlink created from the ``/mnt/liferay/deploy`` to ``$LIFERAY:HOME/deploy``
+* No patch operations are performed yet
+
+As you can see, this stage in the lifecycle takes place in the middle of the "cofigure" phase, so it can be used to verify/validate system configuration.
+
+Hooking scripts in other phases
+-------------------------------
+
+Entry point defines 3 additional hooking points for user-provided scripts. At these points, the container directory is not ``/mnt/liferay`` but ``/usr/local/liferay/scripts/``. Reason for this is to allow separation of concerns: whereas ``/mnt/liferay`` is meant to be used via mount (bind or volume), the ``/usr/local/liferay/scripts/`` directory can be populated when building a child image as well. This does not preclude doing so via mount, indded, we'll illustrate this feature using bind mounts.
+
+The 3 additional points are ``pre-configure``, ``pre-startup`` and ``post-shutdown``:
+
+* **Pre-configure** scripts are run before any configuration takes place. So it can be used for virtually any purpose. For instance, to download an specific version of the JVM/tomcat, set up encryption keys, check for external services availability, warm up resources, etc
+* **Pre-startup** scripts are run after all configuration actions take place. At this point, the JVM, the tomcat and Liferay should be ready to run, meaning all configuration is in place, products are properly patched, plugins are ready to deploy at runtime, etc. Potential usages of this hook point would be to verify and log the overall configuration, cleanup unused files (e.g. zipped files, patching-tool separation, etc), verify external resource availability, or update database indexes (if patching-tool required that). Right after these scripts are run, tomcat is started.
+* **Post-shutdown** scripts are run once tomcat is stopped, before finishing the entry point process. At this point, container is about to be stopped, so goal here is to clean up. For instance, free external resources that may have been used during portal operation or clean up unused files that will make the writeable layer lighter.
+
+  To illustrate how this works, let's create and run a script to show the liferay configuration (please refer to log-liferay-config.sh, in this repo)
+
+ .. code-block:: bash
+
+   docker run -it -v $(pwd)/log-liferay-config.sh:/usr/local/liferay/scripts/pre-startup/log-config.sh --name liferay-dxp liferay/dxp:7.2.10-dxp-4
 
 
 
