@@ -30,6 +30,8 @@ Your terminal window will show some image-specific logs, then the more familiar 
 *  The ``-it`` flags make the container *interactive*. For Liferay containers, this means that you can stop the container by hitting Ctrl+C. This is a convenient mechanism for development/learning purposes, but it's not necessary at all for our customers in general.
 * The ``-p`` flag *publishes* the ports exposed by the container to the host machine. There are many options here, but in this form, port 8080 on your machine will be forwarded to the port 8080 on the container. This way, you don't need to know what is the container IP address to reach tomcat.
 
+``docker run`` has `so many options <https://docs.docker.com/engine/reference/commandline/run/>`_ that a separate `reference page <https://docs.docker.com/engine/reference/run/>`_ was created. To illustrate, run command allows to define which volumes, networking, environment variables and resource constraints will be available for the container, amongst other things.
+
 Time to access Liferay dxp. Open the browser of your choice and type
 ``http://localhost:8080``.
 
