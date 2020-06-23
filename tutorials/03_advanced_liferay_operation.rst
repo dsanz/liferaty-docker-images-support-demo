@@ -89,16 +89,60 @@ The 3 additional points are ``pre-configure``, ``pre-startup`` and ``post-shutdo
 * **Pre-startup** scripts are run after all configuration actions take place. At this point, the JVM, the tomcat and Liferay should be ready to run, meaning all configuration is in place, products are properly patched, plugins are ready to deploy at runtime, etc. Potential usages of this hook point would be to verify and log the overall configuration, cleanup unused files (e.g. zipped files, patching-tool separation, etc), verify external resource availability, or update database indexes (if patching-tool required that). Right after these scripts are run, tomcat is started.
 * **Post-shutdown** scripts are run once tomcat is stopped, before finishing the entry point process. At this point, container is about to be stopped, so goal here is to clean up. For instance, free external resources that may have been used during portal operation or clean up unused files that will make the writeable layer lighter.
 
-  To illustrate how this works, let's create and run a script to show the liferay configuration (`03_files/pre-startup/log-liferay-config.sh <03_files/pre-startup/log-liferay-config.sh>`_). This time, we'll make the full folder available to the container.
+  To illustrate how this works, let's create and run a script to show the liferay configuration (`03_files/pre-startup/log-liferay-config.sh <03_files/pre-startup/log-liferay-config.sh>`_) right before the tomcat starts. Therefore, we'll use the **pre-startup** phase so that the script will print the system state when tomcat is about to be started.
+
+This time, we'll make the full folder available to the container.
 
 #. Clone this repository if you did not do so already
-#. `cd` into the tutorials section, where this file resides.
+#. ``cd`` into the tutorials section, where this file resides.
 #. Run a new container and specify a folder bind-mount, as follows:
 
    .. code-block:: bash
 
-    docker run -it -v $(pwd)/03-files/pre-startup/:/usr/local/liferay/scripts/pre-startup --name liferay-dxp liferay/dxp:7.2.10-dxp-4
+    docker run -it -v $(pwd)/03-files/pre-startup/:/usr/local/liferay/scripts/pre-startup/ --name liferay-dxp liferay/dxp:7.2.10-dxp-4
 
-This is bind-mounting the full ``./03-files/pre-startup/`` folder into ``/usr/local/liferay/scripts/pre-startup`` in the container.
+This is bind-mounting the full ``./03-files/pre-startup/`` folder into ``/usr/local/liferay/scripts/pre-startup`` in the container. As a result, you should see something like this:
+
+.. code-block:: bash
+
+ [LIFERAY] To SSH into this container, run: "docker exec -it b97315c8068a /bin/bash".
+
+ ... <other initial container log messages>
+
+ [LIFERAY] Executing scripts in /usr/local/liferay/scripts/pre-startup:
+
+ [LIFERAY] Executing log-liferay-config.sh.
+
+ ** Liferay configuration report **
+ ==================================
+ Environment variables
+ ---------------------
+ →  LIFERAY
+ LIFERAY_JPDA_ENABLED=false
+ ... <more script output>
+ Patching tool
+ -------------
+ Loading product and patch information...
+ Product information:
+   * installation type: binary
+     - separated
+     - separation name: 7.2.10-dxp-4-20200121112425051
+     - separation date: 2020-01-21 19:32Z
+   * build number: 7210
+   * service pack version:
+     - available SP version: 1
+     - installable SP version: Not available
+   * patching-tool version: 2.0.15
+   * time: 2020-06-23 15:58Z
+   * host: f0b30cbb3c9a (4 cores)
+   * plugins: no plugins detected
+
+ Currently installed patches: dxp-4-7210
+
+ This installation does not include data for patching. Please download the '7.2.10-dxp-4-20200121112425051' Patching Data file from the Customer Portal to the "patches" folder and run patching-tool setup.
+
+
+ [LIFERAY] Starting Liferay DXP. To stop the container
+ ... <regular liferay logs>
 
 
