@@ -94,7 +94,7 @@ The 3 additional points are ``pre-configure``, ``pre-startup`` and ``post-shutdo
 This time, we'll make the full folder available to the container.
 
 #. Clone this repository if you did not do so already
-#. ``cd`` into the tutorials section, where this file resides.
+#. ``cd`` into the ``tutorials/`` folder, where this tutorial file resides.
 #. Run a new container and specify a folder bind-mount, as follows:
 
    .. code-block:: bash
