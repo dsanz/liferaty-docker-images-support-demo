@@ -44,11 +44,7 @@ To do this, please:
     [LIFERAY] Executing hello-world.sh.
     Hello from the container!
 
-#. Stop the container by hitting ``Ctrl+C``, then delete it:
-
-   .. code-block:: bash
-
-    docker rm liferay-test-script_0
+#. Stop the container by hitting ``Ctrl+C``. Note that we used ``--rm`` so the container will be automatically deleted after being stopped by docker. Note also that this operation is **not deleting the bind-mounted folder contents** in the host machine.
 
 There are some things going on here. To begin, we're using the ``-v`` option, which tells the container we want to mount something into container's local filesystem. In this case, we used a direct file mount: rather than mounting the folder, we've just made a single file mapping between the host and the container.
 
@@ -99,7 +95,7 @@ This time, we'll make the full folder available to the container.
 
    .. code-block:: bash
 
-    docker run -it -v $(pwd)/03-files/pre-startup/:/usr/local/liferay/scripts/pre-startup/ --name liferay-dxp liferay/dxp:7.2.10-dxp-4
+    docker run --rm -it -v $(pwd)/03-files/pre-startup/:/usr/local/liferay/scripts/pre-startup/ --name liferay-test-script_1 liferay/dxp:7.2.10-dxp-4
 
 This is bind-mounting the full ``./03-files/pre-startup/`` folder into ``/usr/local/liferay/scripts/pre-startup`` in the container. As a result, you should see something like this:
 
@@ -144,5 +140,3 @@ This is bind-mounting the full ``./03-files/pre-startup/`` folder into ``/usr/lo
 
  [LIFERAY] Starting Liferay DXP. To stop the container
  ... <regular liferay logs>
-
-
