@@ -69,7 +69,7 @@ This local file ``/home/me/docker/hello-world.sh`` in the host is mounted onto t
 
 In this case, for all purposes, the container will see a file called ``a.sh`` located in the ``/mnt/liferay/scripts/`` directory.
 
-Finally, pleae note that we used ``--rm`` so the container will be automatically deleted after being stopped by docker. Note also that this operation is **not deleting the bind-mounted folder contents** in the host machine, which is the expectation as that part was mounted into the container filesystem, but is not *part* of the writeable layer.
+Finally, please note that we used ``--rm`` so the container will be automatically deleted after being stopped by docker. Note also that this operation is **not deleting the bind-mounted folder contents** in the host machine, which is the expectation as that part was mounted into the container filesystem, but is not *part* of the writeable layer.
 
 This example hooks ``hello-world.sh`` into a specific point in the container lifecycle. When the script gets run,
 
