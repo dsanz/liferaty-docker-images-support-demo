@@ -44,7 +44,7 @@ To do this, please:
     [LIFERAY] Executing hello-world.sh.
     Hello from the container!
 
-#. Stop the container by hitting ``Ctrl+C``. Note that we used ``--rm`` so the container will be automatically deleted after being stopped by docker. Note also that this operation is **not deleting the bind-mounted folder contents** in the host machine.
+#. Stop the container by hitting ``Ctrl+C``.
 
 There are some things going on here. To begin, we're using the ``-v`` option, which tells the container we want to mount something into container's local filesystem. In this case, we used a direct file mount: rather than mounting the folder, we've just made a single file mapping between the host and the container.
 
@@ -61,6 +61,8 @@ This local file ``/home/me/docker/hello-world.sh`` in the host is mounted onto t
   docker run --rm -it -v $(pwd)/hello-world.sh:/mnt/liferay/scripts/a.sh ...
 
 In this case, for all purposes, the container will see a file called ``a.sh`` located in the ``/mnt/liferay/scripts/`` directory.
+
+Finally, pleae note that we used ``--rm`` so the container will be automatically deleted after being stopped by docker. Note also that this operation is **not deleting the bind-mounted folder contents** in the host machine, which is the expectation as that part was mounted into the container filesystem, but is not *part* of the writeable layer.
 
 This example hooks ``hello-world.sh`` into a specific point in the container lifecycle. When the script gets run,
 
