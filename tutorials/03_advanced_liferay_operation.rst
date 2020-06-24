@@ -33,6 +33,11 @@ To do this, please:
    .. code-block:: bash
 
     docker run --rm -it -v $(pwd)/hello-world.sh:/mnt/liferay/scripts/hello-world.sh --name liferay-test-script_0 liferay/dxp:7.2.10-dxp-4
+
+#. Observe container logs, before liferay is started. You should see something similar to:
+
+   .. code-block:: bash
+
     [LIFERAY] To SSH into this container, run: "docker exec -it 32ef2299ca83 /bin/bash".
 
     [LIFERAY] Using zulu8 JDK. You can use another JDK by setting the "JAVA_VERSION" environment varible.
@@ -43,6 +48,8 @@ To do this, please:
 
     [LIFERAY] Executing hello-world.sh.
     Hello from the container!
+
+    ... <Liferay DXP logs>
 
 #. Stop the container by hitting ``Ctrl+C``.
 
