@@ -117,8 +117,7 @@ As explained before, orchestrating services is not just about running them toget
 
 The first attempt to have multi-container service composition would roughly be about choosing a compatible database image (say, mysql) and write something like this:
 
-.. code-block:: yaml
-   :emphasize-lines: 7,8
+.. code-block:: bash
 
  version: '3'
  services:
