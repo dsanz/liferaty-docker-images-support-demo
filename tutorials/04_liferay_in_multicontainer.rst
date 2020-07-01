@@ -3,6 +3,12 @@ Liferay in a multi container setting
 
 This tutorial will enable reader to understand and run simple examples of multicontainer applications where Liferay plays a central role.
 
+.. contents::
+
+Introduction
+============
+Before exploring multi-container settings, let's take a quick look to some basics about orchestration and docker-compose, which will be helpful to better understand what comes next.
+
 Bye Liferay container, hello Liferay service
 --------------------------------------------
 After a quick glance over the previous tutorials or the skillmap use cases (except for the ones dealing with multicontainer settings), reader will realize that the way to run a container is always the same:
