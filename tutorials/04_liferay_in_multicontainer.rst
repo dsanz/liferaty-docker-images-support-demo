@@ -1,5 +1,5 @@
 Liferay in a multi container setting
-====================================
+************************************
 
 This tutorial will enable reader to understand and run simple examples of multicontainer applications where Liferay plays a central role.
 
@@ -99,4 +99,6 @@ As opposed to ``docker run``, where containers use the default bridge network, d
 
 You can now access liferay from your host as you'd do if you ran the tomcat directly.
 
-If you hit ``Ctrl-C`` you'll get a similar message
+If you hit ``Ctrl-C`` you'll stop all the services. In this sense, docker-compose works in *attached* mode by default.
+
+**Bonus exercise**: using ``docker inspect <container id>``, examine a ``liferay/portal:7.3.1-ga2`` container run with ``docker run`` and another one run via ``docker-compose up``. Note the main differences.
