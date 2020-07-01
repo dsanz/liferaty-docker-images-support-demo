@@ -132,11 +132,21 @@ Well, that's a good start: two services were put together. However, the above wo
 
 Configuring the mysql container
 -------------------------------
-The bare minimum elements needed by the `mysql image <https://hub.docker.com/_/mysql>_` are
+The bare minimum elements needed by the `mysql image <https://hub.docker.com/_/mysql>`_ are
+
+.. code-block:: diff
+
+  version: '3'
+   services:
+     liferay:
+       image: liferay/portal:7.2.1-ga2
+       ports:
+        - 8080:8080
+     database:
+       image: mysql:8.0
+ +     environment:
 
 Communicating both containers
 -----------------------------
-Although docker-compose creates a dedicated network and makes it available to all containers, we are going
+Although docker-compose creates a dedicated network and makes it available to all containers, we are going to create a new network for our composition.
 
-.. literalinclude:: ./04-files/01_hello_world_compose.yml
-    :diff: ./04-files/02_liferay_mysql_bare.yml
