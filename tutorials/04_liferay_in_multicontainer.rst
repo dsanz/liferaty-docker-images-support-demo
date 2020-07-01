@@ -115,7 +115,7 @@ Now that we have a working docker-compose example, we can move forward and add m
 
 As explained before, orchestrating services is not just about running them together. In this section, we'll explore how to make them *work* together, both in terms of needs and, of course, in terms of docker-compose file directives required.
 
-The first attempt to have multi-container service composition would roughly be about choosing a compatible database image (say, mysql) and add it as a new service, like this:
+The first attempt to have multi-container service composition would roughly be about choosing a compatible database image (say, mysql) and add it as a new service, like `this <./04_files/02_liferay_mysql_bare.yml>`_:
 
 .. code-block:: diff
 
