@@ -108,3 +108,33 @@ You can now access liferay from your host as you'd do if you ran the tomcat dire
 If you hit ``Ctrl-C`` you'll stop all the services. In this sense, docker-compose works in *attached* mode by default.
 
 **Bonus exercise**: using ``docker inspect <container id>``, examine a ``liferay/portal:7.3.1-ga2`` container run with ``docker run`` and another one run via ``docker-compose up``. Note the main differences.
+
+Adding the database service
+===========================
+Now that we have a working docker-compose example, we can move forward and add more services. Let's begin by the most obvious one: the database.
+
+As explained before, orchestrating services is not just about running them together. In this section, we'll explore how to make them *work* together, both in terms of needs and, of course, in terms of docker-compose file directives required.
+
+The first attempt to have multi-container service composition would roughly be about choosing a compatible database image (say, mysql) and write something like this:
+
+.. code-block:: bash
+
+ version: '3'
+ services:
+   liferay:
+     image: liferay/portal:7.2.1-ga2
+     ports:
+      - 8080:8080
+   database:
+     image: mysql:8.0
+
+Well, that's a good start: two services were put together. However, the above won't even start. That's far from being enough. We have to make them *work* together. Let's see how.
+
+Configuring the mysql container
+-------------------------------
+The bare minimum elements needed by the `mysql image <https://hub.docker.com/_/mysql>_` are
+
+Communicating both containers
+-----------------------------
+Although docker-compose creates a dedicated network and makes it available to all containers, we are going
+
