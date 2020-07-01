@@ -138,3 +138,5 @@ Communicating both containers
 -----------------------------
 Although docker-compose creates a dedicated network and makes it available to all containers, we are going
 
+.. literalinclude:: ./04-files/01_hello_world_compose.yml
+    :diff: ./04-files/02_liferay_mysql_bare.yml
