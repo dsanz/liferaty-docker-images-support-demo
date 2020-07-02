@@ -191,9 +191,9 @@ To create a network, add its name into the ``networks`` section. Optionally, set
  +  liferay-net:
  +    driver: bridge
 
-First, we told docker-compose to add a new network called ``liferay-net`` using the ``bridge`` network driver. Then, we made the two services to join that network. In the database container, we set an alias ``database`` in that network.
+First, we've told docker-compose to add a new network called ``liferay-net`` using the ``bridge`` network driver. We used a new top-level ``networks`` directive. Then, we made the two services to join that network, using a service-level ``networks`` directive. In the database container, we set an alias ``database`` in that network.
 
-As a result, services can "see" each other by specifying either the IP address or the aliases they have in the network. This last option is really handy as it allows to use a container alias in the configuration given to other containers.
+As a result, services can "see" each other by specifying either the IP address or the aliases they have in the network. This last option is really handy as it allows to **provide a container alias in other container's configuration**.
 
 Communicating both containers: liferay configuration
 ----------------------------------------------------
@@ -201,16 +201,17 @@ Now that containers *are* in a network with specified host names, it's time to c
 
 In the case of Liferay, this configuration is traditionally provided via ``portal-ext.properties`` file. That's a perfectly valid solution, however, it forces us to add an extra file to the container via bind mount, and ensure those properties get updated if the docker-compose file changes. Fortunately, Liferay also provides a mechanism based on *environment variables* with specific names, which overrides portal properties.
 
-This is very suitable for container settings, because it allows to pass portal properties from the docker host environment as follows:
+This is very suitable for container settings, because it allows to pass portal properties from the docker host environment as follows (`source <04_files/05_liferay_mysql_connected.yml>`_):
 
 .. code-block:: diff
 
   version: '3'
-  services
+  services:
     liferay:
       image: liferay/portal:7.2.1-ga2
  +    environment:
- +      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL: jdbc:mysql://database:3306/lrportal?useUnicode=true&characterEncoding=UTF-8&useFastDateParsing=false
+ +      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_DRIVER_UPPERCASEC_LASS_UPPERCASEN_AME: com.mysql.cj.jdbc.Driver
+ +      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL: jdbc:mysql://database:3306/lportal?useUnicode=true&characterEncoding=UTF-8&useFastDateParsing=false
  +      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_USERNAME: mysqluser
  +      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_PASSWORD: test
       ports:
@@ -232,22 +233,98 @@ This is very suitable for container settings, because it allows to pass portal p
     liferay-net:
       driver: bridge
 
-Adding data persistence beyond database service lifespan
---------------------------------------------------------
-By default, database container will store database files on the container writeable layer. This has 2 implications:
- * **Performance**: container filesystems are *layered* meaning that they store the files in separate areas (layers) and use a `Copy On Write <https://docs.docker.com/storage/storagedriver/#the-copy-on-write-cow-strategy>`_ strategy, good to save space, not as performant as the native filesystem.
- * **Lifetime**: writeable layer is disposed when container is removed. Although it's kept when container is stopped (allowing restarting it), container management tools may delete containers along with their data.
+This is the first composition that *connects* both services so that liferay service will persist its data via the database service. We're getting closer. However, that's not enough. Let's run this to discover why.
 
-So, database files shall be stored outside of the container filesystem. This can be done by delegating the storage of a specific directory in the container to an external storage device (see `Providing files to the container <https://grow.liferay.com/people/The+Liferay+Container+Lifecycle#providing-files-to-the-container>`_ for details). In this tutorial, we'll leverage docker-compose to let it create and manage a volume, which will be mounted on the ``/var/lib/mysql`` directory in the container:
+Before running this composition, please make sure that any older container you may have created in this tutorial from previous snippets is deleted:
 
+.. code-block:: bash
+
+ $ docker container rm 04_files_database_1
+ 04_files_database_1
+ $ docker container rm 04_files_liferay_1
+ 04_files_liferay_1
+
+This will force docker-compose to create new containers, and not reusing the previous ones (if already created). This way we can see what happens if you try to run this composition from scratch:
+
+.. code-block:: bash
+
+ dsanz@dsanzthink:~/projects/liferay-docker-images-support-demo/tutorials [master]$ docker-compose -f 04_files/05_liferay_mysql_connected.yml up
+ ...
+ Creating 04_files_database_1 ... done
+ Creating 04_files_liferay_1  ... done
+ Attaching to 04_files_liferay_1, 04_files_database_1
+ ...
+ database_1  | 2020-07-02 14:28:23+00:00 [Note] [Entrypoint]: Entrypoint script for MySQL Server 8.0.19-1debian9 started.
+ liferay_1   | [LIFERAY] To SSH into this container, run: "docker exec -it 94c0961bd735 /bin/bash".
+ ... <more logs from the initialization of both containers>
+ database_1  | 2020-07-02 14:28:23+00:00 [Note] [Entrypoint]: Initializing database files
+ ...
+ database_1  | 2020-07-02 14:28:27+00:00 [Note] [Entrypoint]: Database files initialized
+ ...
+ database_1  | 2020-07-02 14:28:27+00:00 [Note] [Entrypoint]: Temporary server started.
+ ...
+ liferay_1   | 2020-07-02 14:28:29.683 ERROR [main][HikariPool:541] HikariPool-1 - Exception during pool initialization.
+ liferay_1   | com.mysql.cj.jdbc.exceptions.CommunicationsException: Communications link failure__The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server. [Sanitized]
+ liferay_1   | 	at com.mysql.cj.jdbc.exceptions.SQLError.createCommunicationsException(SQLError.java:174)
+ ...
+ liferay_1   | Caused by: com.mysql.cj.exceptions.CJCommunicationsException: Communications link failure__The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server. [Sanitized]
+ ...
+ liferay_1   | Caused by: java.net.ConnectException: Connection refused (Connection refused)
+ ...
+ database_1  | 2020-07-02 14:28:29+00:00 [Note] [Entrypoint]: Creating database lportal
+ database_1  | 2020-07-02 14:28:29+00:00 [Note] [Entrypoint]: Creating user mysqluser
+ database_1  | 2020-07-02 14:28:29+00:00 [Note] [Entrypoint]: Giving user mysqluser access to schema lportal
+ database_1  |
+ database_1  | 2020-07-02 14:28:29+00:00 [Note] [Entrypoint]: Stopping temporary server
+ ...
+ liferay_1   | Caused by: java.net.ConnectException: Connection refused (Connection refused)
+ ...
+ liferay_1   |  java.lang.RuntimeException: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'com.liferay.portal.kernel.util.InfrastructureUtil#0' defined in class path resource [META-INF/infrastructure-spring.xml]: Cannot resolve reference to bean 'liferayTransactionManager' while setting bean property 'transactionManager'; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'liferayTransactionManager' defined in class path resource [META-INF/hibernate-spring.xml]: Cannot resolve reference to bean 'liferayHibernateSessionFactory' while setting constructor argument; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'liferayHibernateSessionFactory' defined in class path resource [META-INF/hibernate-spring.xml]: Invocation of init method failed; nested exception is com.mysql.cj.jdbc.exceptions.CommunicationsException: Communications link failure
+ ...
+ liferay_1   | 02-Jul-2020 14:28:31.011 INFO [main] org.apache.catalina.startup.Catalina.start Server startup in [7,991] milliseconds
+ database_1  | 2020-07-02T14:28:31.378568Z 0 [System] [MY-010910] [Server] /usr/sbin/mysqld: Shutdown complete (mysqld 8.0.19)  MySQL Community Server - GPL.
+ ...
+ database_1  | 2020-07-02 14:28:31+00:00 [Note] [Entrypoint]: MySQL init process done. Ready for start up.
+ ...
+ database_1  | 2020-07-02T14:28:32.182502Z 0 [System] [MY-010116] [Server] /usr/sbin/mysqld (mysqld 8.0.19) starting as process 1
+ database_1  | 2020-07-02T14:28:32.750098Z 0 [Warning] [MY-010068] [Server] CA certificate ca.pem is self signed.
+ database_1  | 2020-07-02T14:28:32.753948Z 0 [Warning] [MY-011810] [Server] Insecure configuration for --pid-file: Location '/var/run/mysqld' in the path is accessible to all OS users. Consider choosing a different directory.
+ database_1  | 2020-07-02T14:28:32.775889Z 0 [System] [MY-010931] [Server] /usr/sbin/mysqld: ready for connections. Version: '8.0.19'  socket: '/var/run/mysqld/mysqld.sock'  port: 3306  MySQL Community Server - GPL.
+ database_1  | 2020-07-02T14:28:32.859155Z 0 [System] [MY-011323] [Server] X Plugin ready for connections. Socket: '/var/run/mysqld/mysqlx.sock' bind-address: '::' port: 33060
+
+ ^CGracefully stopping... (press Ctrl+C again to force)
+ Stopping 04_files_liferay_1  ... done
+ Stopping 04_files_database_1 ... done
+
+As you can see, the mysql container needs some time to create the configured database. During that time, liferay container attempts to connect to such database and generates errors as it's not ready yet.
+
+This is not acceptable solution. Even if both containers could start ok, and in subsequent startups the database is already created, the point is that there's no guarantee that the service is ready before being used. Both services need to be syncrhonized.
 
 Syncrhonizing services
 ----------------------
-Orchestrators allow to start services in a predefined order.
-
-However, starting a container does not mean that container is **ready** to work. For instance, liferay containers take less than a minute to serve the first page.
+docker-compose allow to start services in a `predefined order <https://docs.docker.com/compose/startup-order/>`_. However, starting a container does not mean that container is **ready** to work. For instance, liferay containers take less than a minute to serve the first page. A similar thing happens for mysql when the DB is created for the first time.
 
 The problem we want to solve is: how can liferay service start *after* mysql service is able to accept database connections?
+
+Solution comes via scripting. Containers must run some piece of code which prevents the app to be launched if the dependent services are not ready. This piece of logic, and the general problem it addresses, is out of the scope of docker itself as it just deals with container management. In other words, this falls into application's responsibility rather than the container itself.
+
+So, we must make liferay startup wait till the database service is ready to accept connections. Fortunately, there are 2 elements that makes this requirement easy to achieve:
+
+#. The liferay container allows to hook up scripts to
+#. There's a generic script called `wait-for-it.sh <https://github.com/vishnubob/wait-for-it>`_ which can be used to check the availability of connections to a host:port
+
+However, this will require to provide extra code to the liferay container.
+
+Adding data persistence beyond database service lifespan
+--------------------------------------------------------
+
+By default, database container will store database files on the container writeable layer. This has 2 implications:
+
+* **Performance**: container filesystems are *layered* meaning that they store the files in separate areas (layers) and use a `Copy On Write <https://docs.docker.com/storage/storagedriver/#the-copy-on-write-cow-strategy>`_ strategy, good to save space, not as performant as the native filesystem.
+* **Lifetime**: writeable layer is disposed when container is removed. Although it's kept when container is stopped (allowing restarting it), container management tools may delete containers along with their data.
+
+So, database files shall be stored outside of the container filesystem. This can be done by delegating the storage of a specific directory in the container to an external storage device (see `Providing files to the container <https://grow.liferay.com/people/The+Liferay+Container+Lifecycle#providing-files-to-the-container>`_ for details). In this tutorial, we'll leverage docker-compose to let it create and manage a volume, which will be mounted on the ``/var/lib/mysql`` directory in the container:
+
 
 Using variables in the docker-compose file
 ------------------------------------------
