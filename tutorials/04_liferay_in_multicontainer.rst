@@ -132,7 +132,9 @@ Well, that's a good start: two services were put together. However, the above wo
 
 Configuring the mysql container
 -------------------------------
-The bare minimum elements needed by the `mysql image <https://hub.docker.com/_/mysql>`_ are
+The bare minimum elements needed by the `mysql image <https://hub.docker.com/_/mysql>`_ are the **database name** to create for the first time, the ``root`` **superuser account password** and, optionally, the **credentials of an user** which will be granted superuser permissions for the specified database. That's enough to start a fresh new database server.
+
+All this information can be provided to the container via *environment variables*, which have their own place in the `docker-compose.yml <04_files/03_liferay_mysql_configured_DB.yml>`_:
 
 .. code-block:: diff
 
@@ -145,8 +147,108 @@ The bare minimum elements needed by the `mysql image <https://hub.docker.com/_/m
      database:
        image: mysql:8.0
  +     environment:
+ +       MYSQL_ROOT_PASSWORD: testroot
+ +       MYSQL_DATABASE: lportal
+ +       MYSQL_USER: mysqluser
+ +       MYSQL_PASSWORD: test
 
-Communicating both containers
------------------------------
-Although docker-compose creates a dedicated network and makes it available to all containers, we are going to create a new network for our composition.
+With this, mysql container will be able to start, and an empty database called ``lportal`` will be created. In addition, ``mysqluser`` user can operate as a superuser on that database.
+
+Looks better, but we must ensure that liferay can talk to the database if we want something useful...
+
+Communicating both containers: the network
+------------------------------------------
+By default, docker-compose creates a dedicated `bridge <https://docs.docker.com/network/bridge/>`_ network and makes it available to all containers, meaning that containers **in the same host** can see each other and access to the services in them without the need of exposing ports. That's the reason why mysql port (3309) is not exposed in the container, as it's not required to access mysql from outside the composition.
+
+We are going to create a new network for our composition to showcase the syntax. One can create several networks in a given composition, and make them available to the containers at discretion. This will affect the number of network interfaces and routing rules configured for each container.
+
+Network driver will use the **bridge** driver as all the examples are meant to run in a single docker host. This tutorial is not covering the cases where many docker hosts run a composed application, in which case, the *overlay* driver should be used.
+
+To create a network, add its name into the ``networks`` section. Optionally, set the ``driver`` to use. Then, reference it from the containers which should use that network. That's an excellent chance to give a host name to the container *in that network* via the ``aliases`` directive. The result would look like this:
+
+.. code-block:: diff
+
+  version: '3'
+  services
+    liferay:
+      image: liferay/portal:7.2.1-ga2
+      ports:
+        - 8080:8080
+ +    networks:
+ +      - liferay-net
+    database:
+      image: mysql:8.0
+      environment:
+        MYSQL_ROOT_PASSWORD: testroot
+        MYSQL_DATABASE: lportal
+        MYSQL_USER: mysqluser
+        MYSQL_PASSWORD: test
+ +    networks:
+ +      liferay-net:
+ +        aliases:
+ +          - database
+ +networks:
+ +  liferay-net:
+ +    driver: bridge
+
+First, we told docker-compose to add a new network called ``liferay-net`` using the ``bridge`` network driver. Then, we made the two services to join that network. In the database container, we set an alias ``database`` in that network.
+
+As a result, services can "see" each other by specifying either the IP address or the aliases they have in the network. This last option is really handy as it allows to use a container alias in the configuration given to other containers.
+
+Communicating both containers: liferay configuration
+----------------------------------------------------
+Now that containers *are* in a network with specified host names, it's time to configure liferay to use the database service. Note that this is not a **service-level** configuration (such as the name of the available networks, the ports, the alias, or the service name), but an **application-level** configuration, which is specific to the apps shipped with the container.
+
+In the case of Liferay, this configuration is traditionally provided via ``portal-ext.properties`` file. That's a perfectly valid solution, however, it forces us to add an extra file to the container via bind mount, and ensure those properties get updated if the docker-compose file changes. Fortunately, Liferay also provides a mechanism based on *environment variables* with specific names, which overrides portal properties.
+
+This is very suitable for container settings, because it allows to pass portal properties from the docker host environment as follows:
+
+.. code-block:: diff
+
+  version: '3'
+  services
+    liferay:
+      image: liferay/portal:7.2.1-ga2
+ +    environment:
+ +      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL: jdbc:mysql://database:3306/lrportal?useUnicode=true&characterEncoding=UTF-8&useFastDateParsing=false
+ +      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_USERNAME: mysqluser
+ +      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_PASSWORD: test
+      ports:
+        - 8080:8080
+      networks:
+        - liferay-net
+    database:
+      image: mysql:8.0
+      environment:
+        MYSQL_ROOT_PASSWORD: testroot
+        MYSQL_DATABASE: lportal
+        MYSQL_USER: mysqluser
+        MYSQL_PASSWORD: test
+      networks:
+        liferay-net:
+          aliases:
+            - database
+  networks:
+    liferay-net:
+      driver: bridge
+
+Adding data persistence beyond database service lifespan
+--------------------------------------------------------
+By default, database container will store database files on the container writeable layer. This has 2 implications:
+ * **Performance**: container filesystems are *layered* meaning that they store the files in separate areas (layers) and use a `Copy On Write <https://docs.docker.com/storage/storagedriver/#the-copy-on-write-cow-strategy>`_ strategy, good to save space, not as performant as the native filesystem.
+ * **Lifetime**: writeable layer is disposed when container is removed. Although it's kept when container is stopped (allowing restarting it), container management tools may delete containers along with their data.
+
+So, database files shall be stored outside of the container filesystem. This can be done by delegating the storage of a specific directory in the container to an external storage device (see `Providing files to the container <https://grow.liferay.com/people/The+Liferay+Container+Lifecycle#providing-files-to-the-container>`_ for details). In this tutorial, we'll leverage docker-compose to let it create and manage a volume, which will be mounted on the ``/var/lib/mysql`` directory in the container:
+
+
+Syncrhonizing services
+----------------------
+Orchestrators allow to start services in a predefined order.
+
+However, starting a container does not mean that container is **ready** to work. For instance, liferay containers take less than a minute to serve the first page.
+
+The problem we want to solve is: how can liferay service start *after* mysql service is able to accept database connections?
+
+Using variables in the docker-compose file
+------------------------------------------
 
