@@ -441,7 +441,7 @@ Subsequent runs of the above composition will be faster because ``docker-compose
 
 * **Creating** means that the container did not exist in the docker host previously, so it will be created and run for the first time.
 * **Recreating** means that container already exists in the docker host and it's stopped. Its configuration in the docker-compose.yml has changed so the container can not be started again. Therefore, it is removed, then re-created with the same name and new options.
-* **Starting** means that the container already exists in the docker host, it's stooped, and its configuration did not change from the previous run, so it can be started with the same options. In this case, writeable layer is kept.
+* **Starting** means that the container already exists in the docker host, it's stopped, and its configuration did not change from the previous run, so it can be started with the same options. In this case, writeable layer is kept.
 
 By default, database container will store database files on the container writeable layer. This is not particular for the database service. Any container which modifies files originally present in the image will create a copy of them in the writeable layer. This has 2 implications:
 
