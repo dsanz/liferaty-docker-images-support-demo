@@ -377,8 +377,8 @@ The above will make the contents of `./06_liferay/ <./04_files/06_liferay>`_ ava
 
 As a result, the liferay container entry point will do the following *before* running tomcat:
 
-# Copy whatever it finds in ``/mnt/liferay/files`` to ``$liferay_home``. That will make the ``$liferay_home/wait-for-it.sh`` available for running
-# Run whatever it finds in ``/mnt/liferay/scripts``
+#. Copy whatever it finds in ``/mnt/liferay/files`` to ``$liferay_home``. That will make the ``$liferay_home/wait-for-it.sh`` available for running
+#. Run whatever it finds in ``/mnt/liferay/scripts``
 
 This is the result:
 
