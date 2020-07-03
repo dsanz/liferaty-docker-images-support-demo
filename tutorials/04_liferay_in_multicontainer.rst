@@ -61,7 +61,7 @@ You might have guessed that the above has some resemblance with the docker run o
 
 However, to run this, we'll not use ``docker run`` but ``docker-compose``. Please note that `docker-compose <https://docs.docker.com/compose/>`_ is a separate tool which has to be installed in your host machine along with the docker engine.
 
-docker-compose has a `specific CLI <https://docs.docker.com/compose/reference/overview/>`_. It's not a goal of this tutorial to describe it thoroughly as focus is to help reader to acquire a basic understanding of how services are declared and used.
+``docker-compose`` has a `specific CLI <https://docs.docker.com/compose/reference/overview/>`_. It's not a goal of this tutorial to describe it thoroughly as focus is to help reader to acquire a basic understanding of how services are declared and used.
 
 A note about file naming: as sample file is not named ``docker-compose.yml`` as the standard convention suggests, we'll have to tell what file do we want docker-compose to read. This is achieved with the ``-f`` option.
 
