@@ -357,7 +357,7 @@ The last element we need is to configure the bind-mount into the liferay contain
       networks:
         - liferay-net
  +    volumes:
- +      - ./files/6_liferay/:/mnt/liferay
+ +      - ./06_liferay:/mnt/liferay
     database:
       image: mysql:8.0
       environment:
@@ -373,7 +373,9 @@ The last element we need is to configure the bind-mount into the liferay contain
     liferay-net:
       driver: bridge
 
-The above will make the contents of `./files/6_liferay/ <./files/6_liferay>`_ available in ``/mnt/liferay/`` folder in the container. As a result, the liferay container entry point will do the following *before* running tomcat:
+The above will make the contents of `./06_liferay/ <./04_files/06_liferay>`_ available in ``/mnt/liferay/`` folder in the container. Please note that this location is relative to the directory where the docker-compose.yml file lives, and not where docker-compose command is run.
+
+As a result, the liferay container entry point will do the following *before* running tomcat:
 
 # Copy whatever it finds in ``/mnt/liferay/files`` to ``$liferay_home``. That will make the ``$liferay_home/wait-for-it.sh`` available for running
 # Run whatever it finds in ``/mnt/liferay/scripts``
@@ -446,11 +448,9 @@ By default, database container will store database files on the container writea
 * **Performance**: container filesystems are *layered* meaning that they store the files in separate areas (layers) and use a `Copy On Write <https://docs.docker.com/storage/storagedriver/#the-copy-on-write-cow-strategy>`_ strategy, good to save space, not as performant as the native filesystem.
 * **Lifetime**: writeable layer is disposed when container is removed. Although it's kept when container is stopped (allowing restarting it), container management tools may delete containers along with their data.
 
-As a result, database files shall be stored outside of the container filesystem for optimum performance and to enable container disposability. This can be done by delegating the storage of a specific directory in the container to an external storage device (see `Providing files to the container <https://grow.liferay.com/people/The+Liferay+Container+Lifecycle#providing-files-to-the-container>`_ for details).
+As you may have guessed from the above statements, relying on the writable layer of the container to store the database tables seems not the best idea: database files shall be stored outside of the container filesystem for optimum performance and to enable container disposability. This can be done by delegating the storage of a specific directory in the container to an external storage device (see `Providing files to the container <https://grow.liferay.com/people/The+Liferay+Container+Lifecycle#providing-files-to-the-container>`_ for details).
 
-As you may guess from the above statements, relying on the writable layer of the container to store the database tables seems not the best idea.
-
-We'll leverage docker-compose to let it create and manage a **volume**, which will be mounted on the ``/var/lib/mysql`` directory in the container. That directory is the place where mysql stores all database files. This time, we'll not use a bind mount but a real volume, which requires some extra directives:
+We'll leverage docker-compose to create and manage a **volume**, which will be mounted on the ``/var/lib/mysql`` directory in the container. That directory is the place where mysql stores all database files. This time, we'll not use a bind mount but a real volume, which requires some extra directives:
 
 .. code-block:: diff
 
