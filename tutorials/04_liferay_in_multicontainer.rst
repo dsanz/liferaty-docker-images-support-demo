@@ -248,7 +248,7 @@ This will force docker-compose to create new containers, and not reusing the pre
 
 .. code-block:: bash
 
- dsanz@dsanzthink:~/projects/liferay-docker-images-support-demo/tutorials [master]$ docker-compose -f 04_files/05_liferay_mysql_connected.yml up
+ $ docker-compose -f 04_files/05_liferay_mysql_connected.yml up
  ...
  Creating 04_files_database_1 ... done
  Creating 04_files_liferay_1  ... done
@@ -302,18 +302,135 @@ This is not acceptable solution. Even if both containers could start ok, and in 
 
 Syncrhonizing services
 ----------------------
-docker-compose allow to start services in a `predefined order <https://docs.docker.com/compose/startup-order/>`_. However, starting a container does not mean that container is **ready** to work. For instance, liferay containers take less than a minute to serve the first page. A similar thing happens for mysql when the DB is created for the first time.
+docker-compose allows to start services in a `predefined order <https://docs.docker.com/compose/startup-order/>`_. However, starting a container does not mean that container is **ready** to work. For instance, liferay containers take less than a minute to serve the first page. A similar thing happens for mysql when the DB is created for the first time.
 
 The problem we want to solve is: how can liferay service start *after* mysql service is able to accept database connections?
 
-Solution comes via scripting. Containers must run some piece of code which prevents the app to be launched if the dependent services are not ready. This piece of logic, and the general problem it addresses, is out of the scope of docker itself as it just deals with container management. In other words, this falls into application's responsibility rather than the container itself.
+Solution comes via scripting. Containerized applications must run some piece of code which prevents the app to be launched if the dependent services are not ready. This piece of logic, and the general problem it addresses, is out of the scope of docker itself as docker just deals with container management. In other words, this falls into application's responsibility.
 
 So, we must make liferay startup wait till the database service is ready to accept connections. Fortunately, there are 2 elements that makes this requirement easy to achieve:
 
-#. The liferay container allows to hook up scripts to
+#. The liferay container allows to hook up scripts to specific `lifecycle phases <https://grow.liferay.com/people/Advanced+Liferay+operation+use+cases#run-my-own-scripts-in-the-container-before-liferay-starts>`_.
 #. There's a generic script called `wait-for-it.sh <https://github.com/vishnubob/wait-for-it>`_ which can be used to check the availability of connections to a host:port
 
-However, this will require to provide extra code to the liferay container.
+Being it easy to achieve, solution requires to provide extra code to the liferay container, therefore, each application will have different, specific wait requirements.
+
+Implementing this requires the wait-for-it.sh script to be provided to the container, then invoked in an app-specific way from another script, which will be hooked into the configuration phase. The former can be added to the container at ``$liferay_home``, and the latter has to be copied into the ``/mnt/liferay/scripts`` for the container to detect and execute it. This yields to the following file structure to be bind-mounted into the container:
+
+.. code-block:: bash
+
+ liferay/
+ ├── files
+ │   └── wait-for-it.sh
+ └── scripts
+     └── wait-for-mysql.sh
+
+The logic for wait-for-mysql.sh is as follows:
+
+.. code-block:: bash
+
+ #!/usr/bin/env bash
+ chmod a+x /opt/liferay/wait-for-it.sh
+ bash /opt/liferay/wait-for-it.sh -s -t 60 database:3306
+
+Few things to note:
+
+* ``wait-for-it.sh`` is *guaranteed* to be copied into ``$liferay_home``(/opt/liferay) before ``wait-for-mysql.sh`` is run
+* ``wait-for-mysql.sh`` can use the database service hostname as it's available in the container and resolved to the database container's IP address. If service changes its alias in the network, script must reflect that.
+* Database port is *reachable* from the liferay container even if it's not exposed by the service, because the database service is in the same network as the liferay service
+
+The last element we need is to configure the bind-mount into the liferay container. Time use the ``volumes`` directive to bind-mount our file structure onto the liferay container:
+
+.. code-block:: diff
+
+  version: '3'
+  services:
+    liferay:
+      image: liferay/portal:7.2.1-ga2
+      environment:
+        LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_DRIVER_UPPERCASEC_LASS_UPPERCASEN_AME: com.mysql.cj.jdbc.Driver
+        LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL: jdbc:mysql://database:3306/lportal?useUnicode=true&characterEncoding=UTF-8&useFastDateParsing=false
+        LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_USERNAME: mysqluser
+        LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_PASSWORD: test
+      ports:
+        - 8080:8080
+      networks:
+        - liferay-net
++     volumes:
++       - ./files/6_liferay/:/mnt/liferay
+    database:
+      image: mysql:8.0
+      environment:
+        MYSQL_ROOT_PASSWORD: testroot
+        MYSQL_DATABASE: lportal
+        MYSQL_USER: mysqluser
+        MYSQL_PASSWORD: test
+      networks:
+        liferay-net:
+          aliases:
+            - database
+  networks:
+    liferay-net:
+      driver: bridge
+
+The above will make the contents of `./files/6_liferay/ <./files/6_liferay>`_ available in ``/mnt/liferay/`` folder in the container. As a result, the liferay container entry point will do the following *before* running tomcat:
+
+# Copy whatever it finds in ``/mnt/liferay/files`` to ``$liferay_home``. That will make the ``$liferay_home/wait-for-it.sh`` available for running
+# Run whatever it finds in ``/mnt/liferay/scripts``
+
+This is the result:
+
+.. code-block:: bash
+
+ $ docker-compose -f 04_files/06_liferay_mysql_synchronized.yml up
+ ...
+ Creating 04_files_liferay_1  ... done
+ Creating 04_files_database_1 ... done
+ Attaching to 04_files_database_1, 04_files_liferay_1
+ database_1  | 2020-07-03 10:23:44+00:00 [Note] [Entrypoint]: Entrypoint script for MySQL Server 8.0.19-1debian9 started.
+ ...
+ database_1  | 2020-07-03 10:23:44+00:00 [Note] [Entrypoint]: Initializing database files
+ ...
+ database_1  | 2020-07-03T10:23:44.851891Z 0 [System] [MY-013169] [Server] /usr/sbin/mysqld (mysqld 8.0.19) initializing of server in progress as process 46
+ liferay_1   | [LIFERAY] To SSH into this container, run: "docker exec -it 1a95f6c71c90 /bin/bash".
+ liferay_1   |
+ liferay_1   | [LIFERAY] Copying files from /mnt/liferay/files:
+ liferay_1   |
+ liferay_1   | /mnt/liferay/files
+ liferay_1   | └── wait-for-it.sh
+ liferay_1   |
+ liferay_1   | [LIFERAY] ... into /opt/liferay.
+ liferay_1   |
+ liferay_1   | [LIFERAY] Executing scripts in /mnt/liferay/scripts:
+ liferay_1   |
+ liferay_1   | [LIFERAY] Executing wait-for-mysql.sh.
+ liferay_1   | wait-for-it.sh: waiting 60 seconds for database:3306
+ ...
+ database_1  | 2020-07-03 10:23:48+00:00 [Note] [Entrypoint]: Database files initialized
+ database_1  | 2020-07-03 10:23:48+00:00 [Note] [Entrypoint]: Starting temporary server
+ ...
+ database_1  | 2020-07-03 10:23:51+00:00 [Note] [Entrypoint]: Creating database lportal
+ database_1  | 2020-07-03 10:23:51+00:00 [Note] [Entrypoint]: Creating user mysqluser
+ database_1  | 2020-07-03 10:23:51+00:00 [Note] [Entrypoint]: Giving user mysqluser access to schema lportal
+ database_1  |
+ database_1  | 2020-07-03 10:23:51+00:00 [Note] [Entrypoint]: Stopping temporary server
+ ...
+ database_1  | 2020-07-03 10:23:53+00:00 [Note] [Entrypoint]: Temporary server stopped
+ database_1  |
+ database_1  | 2020-07-03 10:23:53+00:00 [Note] [Entrypoint]: MySQL init process done. Ready for start up.
+ database_1  |
+ ...
+ database_1  | 2020-07-03T10:23:54.199832Z 0 [System] [MY-011323] [Server] X Plugin ready for connections. Socket: '/var/run/mysqld/mysqlx.sock' bind-address: '::' port: 33060
+ liferay_1   | wait-for-it.sh: database:3306 is available after 9 seconds
+ ...
+ liferay_1   | 03-Jul-2020 10:23:55.458 INFO [main] org.apache.catalina.startup.Catalina.load Server initialization in [492] milliseconds
+ ...
+ liferay_1   | 2020-07-03 10:24:29.240 WARN  [main][ReleaseLocalServiceImpl:238] Table 'lportal.Release_' doesn't exist
+ liferay_1   | 2020-07-03 10:24:29.243 INFO  [main][ReleaseLocalServiceImpl:129] Create tables and populate with default data
+ ...
+ liferay_1   | 03-Jul-2020 10:25:17.168 INFO [main] org.apache.catalina.startup.Catalina.start Server startup in [81,708] milliseconds
+
+We can see how liferay waits 9 seconds till mysql is ready to accept connections. This allows a normal portal startup which includes database tables creation.
 
 Adding data persistence beyond database service lifespan
 --------------------------------------------------------
