@@ -504,12 +504,12 @@ The last step in this section addresses the problem of ensuring consistency acro
       image: liferay/portal:7.2.1-ga2
       environment:
         LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_DRIVER_UPPERCASEC_LASS_UPPERCASEN_AME: com.mysql.cj.jdbc.Driver
+ -      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL: jdbc:mysql://database:3306/lportal?useUnicode=true&characterEncoding=UTF-8&useFastDateParsing=false
  +      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL: jdbc:mysql://database:3306/${mysql_database_name}?useUnicode=true&characterEncoding=UTF-8&useFastDateParsing=false
- -       LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL: jdbc:mysql://database:3306/lportal?useUnicode=true&characterEncoding=UTF-8&useFastDateParsing=false
- +      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_USERNAME: ${mysql_user_name}
  -      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_USERNAME: mysqluser
- +      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_PASSWORD: ${mysql_user_password}
+ +      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_USERNAME: ${mysql_user_name}
  -      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_PASSWORD: test
+ +      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_PASSWORD: ${mysql_user_password}
       ports:
         - 8080:8080
       networks:
@@ -520,12 +520,12 @@ The last step in this section addresses the problem of ensuring consistency acro
       image: mysql:8.0
       environment:
         MYSQL_ROOT_PASSWORD: testroot
- +      MYSQL_DATABASE: ${mysql_database_name}
  -      MYSQL_DATABASE: lportal
- +      MYSQL_USER: ${mysql_user_name}
+ +      MYSQL_DATABASE: ${mysql_database_name}
  -      MYSQL_USER: mysqluser
- +      MYSQL_PASSWORD: ${mysql_user_password}
+ +      MYSQL_USER: ${mysql_user_name}
  -      MYSQL_PASSWORD: test
+ +      MYSQL_PASSWORD: ${mysql_user_password}
       networks:
         liferay-net:
           aliases:
