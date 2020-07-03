@@ -335,9 +335,9 @@ The logic for wait-for-mysql.sh is as follows:
 
 Few things to note:
 
-* ``wait-for-it.sh`` is *guaranteed* to be copied into ``$liferay_home``(/opt/liferay) before ``wait-for-mysql.sh`` is run
+* ``wait-for-it.sh`` is *guaranteed* to be copied into ``$liferay_home`` (/opt/liferay) before ``wait-for-mysql.sh`` is run
 * ``wait-for-mysql.sh`` can use the database service hostname as it's available in the container and resolved to the database container's IP address. If service changes its alias in the network, script must reflect that.
-* Database port is *reachable* from the liferay container even if it's not exposed by the service, because the database service is in the same network as the liferay service
+* Database *port* (3306) is *reachable* from the liferay container even if it's not exposed by the service, because the database service is in the same network as the liferay service
 
 The last element we need is to configure the bind-mount into the liferay container. Time use the ``volumes`` directive to bind-mount our file structure onto the liferay container:
 
