@@ -1,7 +1,7 @@
 Liferay in a multi container setting
 ************************************
 
-This tutorial will enable reader to understand and run simple examples of multicontainer applications where Liferay plays a central role. All samples are provided in separate files `here <04_files/>`_
+This tutorial will enable reader to understand and run simple examples of multicontainer applications where Liferay plays a central role. All samples are provided in separate files `here <04_files/>`_, therefore, the best way to run though this tutorial is to clone the repository and try the samples.
 
 .. contents::
 
