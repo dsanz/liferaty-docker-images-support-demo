@@ -201,7 +201,7 @@ Now that containers *are* in a network with specified host names, it's time to c
 
 In the case of Liferay, this configuration is traditionally provided via ``portal-ext.properties`` file. That's a perfectly valid solution, however, it forces us to add an extra file to the container via bind mount, and ensure those properties get updated if the docker-compose file changes. Fortunately, Liferay also provides a mechanism based on *environment variables* with specific names, which overrides portal properties.
 
-This is very suitable for container settings, because it allows to pass portal properties from the docker host environment, as illustrated in (`sample #5 <04_files/05_liferay_mysql_connected.yml>`_):
+This is very suitable for container settings, because it allows to pass portal properties from the docker host environment, as illustrated in `sample #5 <04_files/05_liferay_mysql_connected.yml>`_:
 
 .. code-block:: diff
 
