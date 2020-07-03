@@ -538,7 +538,7 @@ The last step in this section addresses the problem of ensuring consistency acro
   volumes:
     volume-mysql:
 
-Besides consistency, using variables avoids hardcoding valiues which may not need to be preset or even made public (like passwords). Please note that there are more advanced ways to share secrets between containers, which are out of the scope of this tutorial.
+Besides consistency, using variables avoids hardcoding valiues which may not need to be preset or even made public (like passwords). Please note that there are more advanced ways to `share secrets <https://docs.docker.com/compose/compose-file/#secrets>`_ between containers, but these lie out of the scope of this tutorial.
 
 So, where are those variables taken from? ``docker-compose`` reads a `.env <./04_files/.env>`_ file which must be in the same folder where docker-compose is run. This mechanism is called `default environment variable declaration <https://docs.docker.com/compose/env-file/>`_ and is based on `variable substitution <https://docs.docker.com/compose/compose-file/#variable-substitution>`_ at the ``docker-compose`` file level. In other words, these variables are not passed to the services as part of the container environment. Please note this is a docker-compose unique feature.
 
@@ -546,14 +546,14 @@ So, in this case, the .env file would look like this:
 
 .. code-block:: bash
 
-mysql_user_name=mysqluser
-mysql_user_password=test
-mysql_database_name=lportal
+ mysql_user_name=mysqluser
+ mysql_user_password=test
+ mysql_database_name=lportal
 
 Finally, please remember to run this from the place where the .env file is, otherwise, docker-compose won't find it:
 
 .. code-block:: bash
 
- $ /04_files [master]$ docker-compose -f 08_liferay_mysql_with_variables.yml up
+ /04_files [master]$ docker-compose -f 08_liferay_mysql_with_variables.yml up
 
 
