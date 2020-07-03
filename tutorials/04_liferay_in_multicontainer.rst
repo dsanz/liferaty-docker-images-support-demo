@@ -556,4 +556,36 @@ Finally, please remember to run this from the place where the .env file is, othe
 
  /04_files [master]$ docker-compose -f 08_liferay_mysql_with_variables.yml up
 
+Adding the search engine
+========================
+We have a running example of a multi-container application which combines the liferay and the database services. Next one is **search**. This service must be based on some `elasicsearch image <https://hub.docker.com/_/elasticsearch>`_
+
+Selecting the ES image
+----------------------
+
+Configuring OS-level ES6 container limits
+-----------------------------------------
+
+Configuring the ES service: plugins and environment
+---------------------------------------------------
+
+Persisting the search indexes
+-----------------------------
+
+Using ES7 container
+-------------------
+
+Clustering Liferay
+==================
+
+Scaling services
+----------------
+
+Using docker swarm
+------------------
+
+More features
+-------------
+Routing mesh, load balancing, sticky session vs tomcat session replication
+
 
