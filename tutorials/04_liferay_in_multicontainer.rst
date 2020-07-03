@@ -1,7 +1,7 @@
 Liferay in a multi container setting
 ************************************
 
-This tutorial will enable reader to understand and run simple examples of multicontainer applications where Liferay plays a central role.
+This tutorial will enable reader to understand and run simple examples of multicontainer applications where Liferay plays a central role. All samples are provided in separate files `here <04_files/>`_
 
 .. contents::
 
@@ -40,7 +40,7 @@ That's the essence of what we're about to discover in this tutorial. You would n
 
 Hello world (docker-compose)
 ----------------------------
-To illustrate the above in a minimal but real setting, consider this docker-compose yaml file (`04_files/01_hello_world_compose.yml <./04_files/01_hello_world_compose.yml>`_):
+To illustrate the above in a minimal but real setting, consider the docker-compose yaml file in `sample #1 <./04_files/01_hello_world_compose.yml>`_:
 
 .. code-block:: yaml
 
@@ -115,7 +115,7 @@ Now that we have a working docker-compose example, we can move forward and add m
 
 As explained before, orchestrating services is not just about running them together. In this section, we'll explore how to make them *work* together, both in terms of needs and, of course, in terms of docker-compose file directives required.
 
-The first attempt to have multi-container service composition would roughly be about choosing a compatible database image (say, mysql) and add it as a new service, like `this <./04_files/02_liferay_mysql_bare.yml>`_:
+The first attempt to have multi-container service composition would roughly be about choosing a compatible database image (say, mysql) and add it as a new service, as shown in `sample #2 <./04_files/02_liferay_mysql_bare.yml>`_:
 
 .. code-block:: diff
 
@@ -134,7 +134,7 @@ Configuring the mysql container
 -------------------------------
 The bare minimum elements needed by the `mysql image <https://hub.docker.com/_/mysql>`_ are the **database name** to create for the first time, the ``root`` **superuser account password** and, optionally, the **credentials of an user** which will be granted superuser permissions for the specified database. That's enough to start a fresh new database server.
 
-All this information can be provided to the container via *environment variables*, which have their own place in the `docker-compose.yml <04_files/03_liferay_mysql_configured_DB.yml>`_:
+All this information can be provided to the container via *environment variables*, which have their own place in the ``docker-compose.yml`` as shown in `sample #3 <04_files/03_liferay_mysql_configured_DB.yml>`_:
 
 .. code-block:: diff
 
@@ -164,7 +164,7 @@ We are going to create a new network for our composition to showcase the syntax.
 
 Network driver will use the **bridge** driver as all the examples are meant to run in a single docker host. This tutorial is not covering the cases where many docker hosts run a composed application, in which case, the *overlay* driver should be used.
 
-To create a network, add its name into the ``networks`` section. Optionally, set the ``driver`` to use. Then, reference it from the containers which should use that network. That's an excellent chance to give a host name to the container *in that network* via the ``aliases`` directive. The result would look like this:
+To create a network, add its name into the ``networks`` section. Optionally, set the ``driver`` to use. Then, reference it from the containers which should use that network. That's an excellent chance to give a host name to the container *in that network* via the ``aliases`` directive. The result would look like `sample #4 <04_files/04_liferay_mysql_networking.yml>`_:
 
 .. code-block:: diff
 
@@ -201,7 +201,7 @@ Now that containers *are* in a network with specified host names, it's time to c
 
 In the case of Liferay, this configuration is traditionally provided via ``portal-ext.properties`` file. That's a perfectly valid solution, however, it forces us to add an extra file to the container via bind mount, and ensure those properties get updated if the docker-compose file changes. Fortunately, Liferay also provides a mechanism based on *environment variables* with specific names, which overrides portal properties.
 
-This is very suitable for container settings, because it allows to pass portal properties from the docker host environment as follows (`source <04_files/05_liferay_mysql_connected.yml>`_):
+This is very suitable for container settings, because it allows to pass portal properties from the docker host environment, as illustrated in (`sample #5 <04_files/05_liferay_mysql_connected.yml>`_):
 
 .. code-block:: diff
 
@@ -339,7 +339,7 @@ Few things to note:
 * ``wait-for-mysql.sh`` can use the database service hostname as it's available in the container and resolved to the database container's IP address. If service changes its alias in the network, script must reflect that.
 * Database *port* (3306) is *reachable* from the liferay container even if it's not exposed by the service, because the database service is in the same network as the liferay service
 
-The last element we need is to configure the bind-mount into the liferay container. Time use the ``volumes`` directive to bind-mount our file structure onto the liferay container:
+The last element we need is to configure the bind-mount into the liferay container. Time use the ``volumes`` directive to bind-mount our file structure onto the liferay container, as shown in `sample #6 <04_files/06_liferay_mysql_synchronized.yml>`_:
 
 .. code-block:: diff
 
@@ -450,7 +450,7 @@ By default, database container will store database files on the container writea
 
 As you may have guessed from the above statements, relying on the writable layer of the container to store the database tables seems not the best idea: database files shall be stored outside of the container filesystem for optimum performance and to enable container disposability. This can be done by delegating the storage of a specific directory in the container to an external storage device (see `Providing files to the container <https://grow.liferay.com/people/The+Liferay+Container+Lifecycle#providing-files-to-the-container>`_ for details).
 
-We'll leverage docker-compose to create and manage a **volume**, which will be mounted on the ``/var/lib/mysql`` directory in the container. That directory is the place where mysql stores all database files. This time, we'll not use a bind mount but a real volume, which requires some extra directives:
+We'll leverage docker-compose to create and manage a **volume**, which will be mounted on the ``/var/lib/mysql`` directory in the container. That directory is the place where mysql stores all database files. This time, we'll not use a bind mount but a real volume, which requires some extra directives as shown in `sample #7 <04_files/07_liferay_mysql_permanent_storage.yml>`_:
 
 .. code-block:: diff
 
@@ -494,7 +494,7 @@ In addition, the **service-level** ``volumes`` directive associates the ``mysql-
 
 Using variables in the docker-compose file
 ------------------------------------------
-The last step in this section addresses the problem of ensuring consistency across the docker-compose file via variables. Some of the named elements we've used across the previous sections can be specified using variables. More specifically, the values we give to the yaml keys.
+The last step in this section addresses the problem of ensuring consistency across the docker-compose file via variables. Some of the named elements we've used across the previous sections can be specified using variables. More specifically, the values we give to the yaml keys, as illustrated by `sample #8 <04_files/08_liferay_mysql_with_variables.yml>`_:.
 
 .. code-block:: diff
 
