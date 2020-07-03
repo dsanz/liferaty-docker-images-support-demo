@@ -435,13 +435,62 @@ We can see how liferay waits 9 seconds till mysql is ready to accept connections
 Adding data persistence beyond database service lifespan
 --------------------------------------------------------
 
-By default, database container will store database files on the container writeable layer. This has 2 implications:
+Subsequent runs of the above composition will be faster because ``docker-compose`` tries to reuse the containers if the configuration does not change. This means that they will be *started* rather than new ones being created. docker-compose informs what specific operation is doing to the containers:
+
+* **Creating** means that the container did not exist in the docker host previously, so it will be created and run for the first time.
+* **Recreating** means that container already exists in the docker host and it's stopped. Its configuration in the docker-compose.yml has changed so the container can not be started again. Therefore, it is removed, then re-created with the same name and new options.
+* **Starting** means that the container already exists in the docker host, it's stooped, and its configuration did not change from the previous run, so it can be started with the same options. In this case, writeable layer is kept.
+
+By default, database container will store database files on the container writeable layer. This is not particular for the database service. Any container which modifies files originally present in the image will create a copy of them in the writeable layer. This has 2 implications:
 
 * **Performance**: container filesystems are *layered* meaning that they store the files in separate areas (layers) and use a `Copy On Write <https://docs.docker.com/storage/storagedriver/#the-copy-on-write-cow-strategy>`_ strategy, good to save space, not as performant as the native filesystem.
 * **Lifetime**: writeable layer is disposed when container is removed. Although it's kept when container is stopped (allowing restarting it), container management tools may delete containers along with their data.
 
-So, database files shall be stored outside of the container filesystem. This can be done by delegating the storage of a specific directory in the container to an external storage device (see `Providing files to the container <https://grow.liferay.com/people/The+Liferay+Container+Lifecycle#providing-files-to-the-container>`_ for details). In this tutorial, we'll leverage docker-compose to let it create and manage a volume, which will be mounted on the ``/var/lib/mysql`` directory in the container:
+As a result, database files shall be stored outside of the container filesystem for optimum performance and to enable container disposability. This can be done by delegating the storage of a specific directory in the container to an external storage device (see `Providing files to the container <https://grow.liferay.com/people/The+Liferay+Container+Lifecycle#providing-files-to-the-container>`_ for details).
 
+As you may guess from the above statements, relying on the writable layer of the container to store the database tables seems not the best idea.
+
+We'll leverage docker-compose to let it create and manage a **volume**, which will be mounted on the ``/var/lib/mysql`` directory in the container. That directory is the place where mysql stores all database files. This time, we'll not use a bind mount but a real volume, which requires some extra directives:
+
+.. code-block:: diff
+
+  version: '3'
+  services:
+    liferay:
+      image: liferay/portal:7.2.1-ga2
+      environment:
+        LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_DRIVER_UPPERCASEC_LASS_UPPERCASEN_AME: com.mysql.cj.jdbc.Driver
+        LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL: jdbc:mysql://database:3306/lportal?useUnicode=true&characterEncoding=UTF-8&useFastDateParsing=false
+        LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_USERNAME: mysqluser
+        LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_PASSWORD: test
+      ports:
+        - 8080:8080
+      networks:
+        - liferay-net
+      volumes:
+        - ./06_liferay:/mnt/liferay
+    database:
+      image: mysql:8.0
+      environment:
+        MYSQL_ROOT_PASSWORD: testroot
+        MYSQL_DATABASE: lportal
+        MYSQL_USER: mysqluser
+        MYSQL_PASSWORD: test
+      networks:
+        liferay-net:
+          aliases:
+            - database
+ +    volumes:
+ +      - volume-mysql:/var/lib/mysql
+  networks:
+    liferay-net:
+      driver: bridge
+ +volumes:
+ +  volume-mysql:
+
+The **top-level** ``volumes`` directive instructs docker-compose to create a volume called ``volume-mysql`` using the default volume driver, which is the ``local`` driver, meaning that the volume is stored in the host machine and made available to the containers managed by the local docker engine.
+
+In addition, the **service-level** ``volumes`` directive associates the ``mysql-volume`` volume with the ``database`` service, indicating a mount point in the container (``/var/lib/mysql``). This allows mysql tables to be stored in the volume rather than in the container writeable layer.
 
 Using variables in the docker-compose file
 ------------------------------------------
