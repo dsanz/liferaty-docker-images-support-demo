@@ -356,8 +356,8 @@ The last element we need is to configure the bind-mount into the liferay contain
         - 8080:8080
       networks:
         - liferay-net
-+     volumes:
-+       - ./files/6_liferay/:/mnt/liferay
+ +    volumes:
+ +      - ./files/6_liferay/:/mnt/liferay
     database:
       image: mysql:8.0
       environment:
