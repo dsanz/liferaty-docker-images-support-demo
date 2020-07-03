@@ -494,4 +494,66 @@ In addition, the **service-level** ``volumes`` directive associates the ``mysql-
 
 Using variables in the docker-compose file
 ------------------------------------------
+The last step in this section addresses the problem of ensuring consistency across the docker-compose file via variables. Some of the named elements we've used across the previous sections can be specified using variables. More specifically, the values we give to the yaml keys.
+
+.. code-block:: diff
+
+  version: '3'
+  services:
+    liferay:
+      image: liferay/portal:7.2.1-ga2
+      environment:
+        LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_DRIVER_UPPERCASEC_LASS_UPPERCASEN_AME: com.mysql.cj.jdbc.Driver
+ +      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL: jdbc:mysql://database:3306/${mysql_database_name}?useUnicode=true&characterEncoding=UTF-8&useFastDateParsing=false
+ -       LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL: jdbc:mysql://database:3306/lportal?useUnicode=true&characterEncoding=UTF-8&useFastDateParsing=false
+ +      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_USERNAME: ${mysql_user_name}
+ -      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_USERNAME: mysqluser
+ +      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_PASSWORD: ${mysql_user_password}
+ -      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_PASSWORD: test
+      ports:
+        - 8080:8080
+      networks:
+        - liferay-net
+      volumes:
+        - ./06_liferay:/mnt/liferay
+    database:
+      image: mysql:8.0
+      environment:
+        MYSQL_ROOT_PASSWORD: testroot
+ +      MYSQL_DATABASE: ${mysql_database_name}
+ -      MYSQL_DATABASE: lportal
+ +      MYSQL_USER: ${mysql_user_name}
+ -      MYSQL_USER: mysqluser
+ +      MYSQL_PASSWORD: ${mysql_user_password}
+ -      MYSQL_PASSWORD: test
+      networks:
+        liferay-net:
+          aliases:
+            - database
+      volumes:
+        - volume-mysql:/var/lib/mysql
+  networks:
+    liferay-net:
+      driver: bridge
+  volumes:
+    volume-mysql:
+
+Besides consistency, using variables avoids hardcoding valiues which may not need to be preset or even made public (like passwords). Please note that there are more advanced ways to share secrets between containers, which are out of the scope of this tutorial.
+
+So, where are those variables taken from? ``docker-compose`` reads a `.env <./04_files/.env>`_ file which must be in the same folder where docker-compose is run. This mechanism is called `default environment variable declaration <https://docs.docker.com/compose/env-file/>`_ and is based on `variable substitution <https://docs.docker.com/compose/compose-file/#variable-substitution>`_ at the ``docker-compose`` file level. In other words, these variables are not passed to the services as part of the container environment. Please note this is a docker-compose unique feature.
+
+So, in this case, the .env file would look like this:
+
+.. code-block:: bash
+
+mysql_user_name=mysqluser
+mysql_user_password=test
+mysql_database_name=lportal
+
+Finally, please remember to run this from the place where the .env file is, otherwise, docker-compose won't find it:
+
+.. code-block:: bash
+
+ $ /04_files [master]$ docker-compose -f 08_liferay_mysql_with_variables.yml up
+
 
