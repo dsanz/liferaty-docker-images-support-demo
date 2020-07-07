@@ -1,7 +1,7 @@
 Liferay in a multi container setting
 ************************************
 
-This tutorial will enable reader to understand and run simple examples of multicontainer applications where Liferay plays a central role. All samples are provided in separate files `here <04_files/>`_, therefore, the best way to run though this tutorial is to clone the repository and try the samples.
+This tutorial will enable reader to understand and run simple examples of multicontainer applications where Liferay plays a central role. All samples are provided in separate files `in this folder <04_files/>`_, therefore, the best way to run though this tutorial is to clone the repository and try the samples.
 
 .. contents::
 
@@ -576,6 +576,7 @@ When using containers, image owners make the decision of what to ship in the ima
  OpenJDK 64-Bit Server VM (Zulu 8.38.0.13-CA-linux-musl-x64) (build 25.212-b04, mixed mode)
 
 Looking at ES6 available tags, we find that
+
  * ES `6.8.0 <https://hub.docker.com/layers/elasticsearch/library/elasticsearch/6.8.0/images/sha256-d0b291d7093b89017e2578932329eebe6f973a382231ff3bed716ea0951d8e9b?context=explore>`_ starts shipping jdk 12.0.1 and increases its version till jdk 14 (in ES `6.8.10 <https://hub.docker.com/layers/elasticsearch/library/elasticsearch/6.8.10/images/sha256-6c36fa585104d28d3a9e53c799a4e20058445476cadb3b3d3e789d3793eed10a?context=explore>`_
  * ES `6.7.x <https://hub.docker.com/_/elasticsearch?tab=tags&page=1&name=6.7.>`_ uses jdk 12
  * ES `6.6.x <https://hub.docker.com/_/elasticsearch?tab=tags&page=1&name=6.6.>`_ and `6.5.x <https://hub.docker.com/_/elasticsearch?tab=tags&page=1&name=6.5.>`_ use jdk 11
@@ -584,10 +585,11 @@ Looking at ES6 available tags, we find that
 
 As a result, there is no way to match jdk versions between containers, not to mention the distribution. Although explicitly noting this fact, in this tutorial, no attempt to harmonize versions will be made. The chosen ES6 image is the `latest 6.5 series <https://hub.docker.com/layers/elasticsearch/library/elasticsearch/6.5.4/images/sha256-93109ce1d590482a06ba085943082b314ac188fcfdbffb68aebb00795c72bc8a?context=explore>`_ as it uses jdk 11 (LTS) but others could have been chosen too.
 
-Configuring the ES6 container requires some extra tweaking which will allow to illustrate other directives in the docker-compose. This tutorial will show some of the practises described in the `Install ES with Docker <https://www.elastic.co/guide/en/elasticsearch/reference/6.5/docker.html>`_, the `Important System Configuration <https://www.elastic.co/guide/en/elasticsearch/reference/6.5/system-config.html>`_ and `Important Elastic Search Configuration<https://www.elastic.co/guide/en/elasticsearch/reference/6.5/important-settings.html>`_.
+Configuring the ES6 container requires some extra tweaking which will allow to illustrate other directives in the docker-compose. This tutorial will show some of the practises described in the `Install ES with Docker <https://www.elastic.co/guide/en/elasticsearch/reference/6.5/docker.html>`_, the `Important System Configuration <https://www.elastic.co/guide/en/elasticsearch/reference/6.5/system-config.html>`_ and `Important Elastic Search Configuration <https://www.elastic.co/guide/en/elasticsearch/reference/6.5/important-settings.html>`_.
 
-Configuring the ES service: system limits, plugins and environment
-------------------------------------------------------------------
+Configuring the ES service: sysctls , ulimits, plugins and environment
+----------------------------------------------------------------------
+
 Our first attempt to add a search service would look like `sample #9 </04_files/09_liferay_mysql_es_bare.yml>`_:
 
 .. code-block:: diff
