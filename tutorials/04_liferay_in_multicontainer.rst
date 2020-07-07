@@ -590,7 +590,7 @@ Configuring the ES6 container requires some extra tweaking which will allow to i
 Configuring the ES service: sysctls , ulimits, plugins and environment
 ----------------------------------------------------------------------
 
-Our first attempt to add a search service would look like `sample #9 </04_files/09_liferay_mysql_es_bare.yml>`_:
+Our first attempt to add a search service would look like `sample #9 <04_files/09_liferay_mysql_es_bare.yml>`_:
 
 .. code-block:: diff
 
@@ -612,7 +612,28 @@ Our first attempt to add a search service would look like `sample #9 </04_files/
   volumes:
     volume-mysql:
 
-One could expect this to at least start the es container, even if it just launched an isolated container. However, we get some previous errors.
+One could expect this to at least start the es container, even if it just launched an isolated container. However, we get some errors even before search container can finish its own startup:
+
+.. code-block:: bash
+
+ $ docker-compose -f 09_liferay_mysql_es_bare.yml up
+ ...
+ Starting 04_files_database_1 ... done
+ Starting 04_files_liferay_1  ... done
+ Creating 04_files_search_1   ... done
+ ...
+ search_1    | [2020-07-07T14:03:36,275][INFO ][o.e.b.BootstrapChecks    ] [nkjR7YC] bound or publishing to a non-loopback address, enforcing bootstrap checks
+ search_1    | ERROR: [1] bootstrap checks failed
+ search_1    | [1]: max virtual memory areas vm.max_map_count [65530] is too low, increase to at least [262144]
+ search_1    | [2020-07-07T14:03:36,346][INFO ][o.e.n.Node               ] [nkjR7YC] stopping ...
+ search_1    | [2020-07-07T14:03:36,447][INFO ][o.e.n.Node               ] [nkjR7YC] stopped
+ search_1    | [2020-07-07T14:03:36,447][INFO ][o.e.n.Node               ] [nkjR7YC] closing ...
+ search_1    | [2020-07-07T14:03:36,477][INFO ][o.e.n.Node               ] [nkjR7YC] closed
+ search_1    | [2020-07-07T14:03:36,479][INFO ][o.e.x.m.j.p.NativeController] [nkjR7YC] Native controller process has stopped - no new native processes can be started
+ 04_files_search_1 exited with code 78
+ ...
+
+As indicated `here <https://www.elastic.co/guide/en/elasticsearch/reference/6.5/vm-max-map-count.html>`_, ES6 requires the ``vm.max_map_count`` setting to be raised above the standard limit
 
 Configuring Liferay to use remote ES6
 -------------------------------------
