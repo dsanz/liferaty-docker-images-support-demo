@@ -558,16 +558,62 @@ Finally, please remember to run this from the place where the .env file is, othe
 
 Adding the search engine
 ========================
-We have a running example of a multi-container application which combines the liferay and the database services. Next one is **search**. This service must be based on some `elasicsearch image <https://hub.docker.com/_/elasticsearch>`_
+We have a running example of a multi-container application which combines the liferay and the database services. Next one is **search**. In the samples shown so far, liferay used the *embedded* elasticsearch. In this section, we'll configure our Liferay application to use ES in remote mode.
 
 Selecting the ES image
 ----------------------
+The search service must be based on some `elasicsearch image <https://hub.docker.com/_/elasticsearch>`_. Liferay 7.2 can work with ES6 and ES7.
 
-Configuring OS-level ES6 container limits
------------------------------------------
+A requirement in 7.2 is that JDK distribution and version used to run tomcat must be exactly `the same <https://help.liferay.com/hc/es/articles/360028711132-Installing-Elasticsearch>`_ as the one running the ES server. This requirement is due to the communication protocol between Liferay and ES.
 
-Configuring the ES service: plugins and environment
----------------------------------------------------
+When using containers, image owners make the decision of what to ship in the image. Liferay 7.2 containers use jdk 8, more specifically:
+
+.. code-block:: bash
+
+ $ docker exec  93d9970b8d07 /usr/lib/jvm/zulu-8/bin/java -version
+ openjdk version "1.8.0_212"
+ OpenJDK Runtime Environment (Zulu 8.38.0.13-CA-linux-musl-x64) (build 1.8.0_212-b04)
+ OpenJDK 64-Bit Server VM (Zulu 8.38.0.13-CA-linux-musl-x64) (build 25.212-b04, mixed mode)
+
+Looking at ES6 available tags, we find that
+ * ES `6.8.0 <https://hub.docker.com/layers/elasticsearch/library/elasticsearch/6.8.0/images/sha256-d0b291d7093b89017e2578932329eebe6f973a382231ff3bed716ea0951d8e9b?context=explore>`_ starts shipping jdk 12.0.1 and increases its version till jdk 14 (in ES `6.8.10 <https://hub.docker.com/layers/elasticsearch/library/elasticsearch/6.8.10/images/sha256-6c36fa585104d28d3a9e53c799a4e20058445476cadb3b3d3e789d3793eed10a?context=explore>`_
+ * ES `6.7.x <https://hub.docker.com/_/elasticsearch?tab=tags&page=1&name=6.7.>`_ uses jdk 12
+ * ES `6.6.x <https://hub.docker.com/_/elasticsearch?tab=tags&page=1&name=6.6.>`_ and `6.5.x <https://hub.docker.com/_/elasticsearch?tab=tags&page=1&name=6.5.>`_ use jdk 11
+ * ES `6.4.x <https://hub.docker.com/_/elasticsearch?tab=tags&page=1&name=6.4.>`_ uses jdk 10
+ * There are no older images in the ES 6 series
+
+As a result, there is no way to match jdk versions between containers, not to mention the distribution. Although explicitly noting this fact, in this tutorial, no attempt to harmonize versions will be made. The chosen ES6 image is the `latest 6.5 series <https://hub.docker.com/layers/elasticsearch/library/elasticsearch/6.5.4/images/sha256-93109ce1d590482a06ba085943082b314ac188fcfdbffb68aebb00795c72bc8a?context=explore>`_ as it uses jdk 11 (LTS) but others could have been chosen too.
+
+Configuring the ES6 container requires some extra tweaking which will allow to illustrate other directives in the docker-compose. This tutorial will show some of the practises described in the `Install ES with Docker <https://www.elastic.co/guide/en/elasticsearch/reference/6.5/docker.html>`_, the `Important System Configuration <https://www.elastic.co/guide/en/elasticsearch/reference/6.5/system-config.html>`_ and `Important Elastic Search Configuration<https://www.elastic.co/guide/en/elasticsearch/reference/6.5/important-settings.html>`_.
+
+Configuring the ES service: system limits, plugins and environment
+------------------------------------------------------------------
+Our first attempt to add a search service would look like `sample #9 </04_files/09_liferay_mysql_es_bare.yml>`_:
+
+.. code-block:: diff
+
+  version: '3'
+  services:
+    liferay:
+      ...
+    database:
+      ...
+ +  search:
+ +    image: elasticsearch:6.5.4
+ +    networks:
+ +      liferay-net:
+ +        aliases:
+ +          - elasticsearch
+  networks:
+    liferay-net:
+      driver: bridge
+  volumes:
+    volume-mysql:
+
+One could expect this to at least start the es container, even if it just launched an isolated container. However, we get some previous errors.
+
+Configuring Liferay to use remote ES6
+-------------------------------------
 
 Persisting the search indexes
 -----------------------------
