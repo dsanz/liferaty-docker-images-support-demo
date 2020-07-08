@@ -652,7 +652,7 @@ Docker allows to set both container **kernel parameters** (*sysctls*) as well as
 
 ES6 container will not start if this limit is too low. At this point, there are basically 2 choices:
 
-1. Disable the use of mmapfs for ES via the setting ``node.store.allow_mmapfs``. This way, ES will use a `different store type <https://www.elastic.co/guide/en/elasticsearch/reference/6.5/index-modules-store.html>`_ for indices and there's no need to configure tke kernel parameter. This approach would look like this:
+1. Disable the use of mmapfs for ES via the setting ``node.store.allow_mmapfs``. This way, ES will use a `different store type <https://www.elastic.co/guide/en/elasticsearch/reference/6.5/index-modules-store.html>`_ for indices and there's no need to configure the kernel parameter. As ES container accepts config being set via environment variables, this approach would look like this:
 
    .. code-block:: diff
 
