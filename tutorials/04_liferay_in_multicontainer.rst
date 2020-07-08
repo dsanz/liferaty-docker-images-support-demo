@@ -612,7 +612,7 @@ Our first attempt to add a search service would look like `sample #9 <04_files/0
   volumes:
     volume-mysql:
 
-One could expect this to at least start the es container, even if it just launched an isolated container. However, we get some errors even before search container can finish its own startup:
+One could expect this to at least start the ES container, even if it just launched an isolated container. However, we get some errors even before search container can finish its own startup:
 
 .. code-block:: bash
 
@@ -635,9 +635,9 @@ One could expect this to at least start the es container, even if it just launch
 
 ES6 requires some system-level changes to function properly. This tutorial reviews some of them to better understand the decisions made to run the container.
 
-As indicated `here <https://www.elastic.co/guide/en/elasticsearch/reference/6.5/vm-max-map-count.html>`_, ES utilizes mmapfs (memory-mapped filesystem) to store the indexes. requires the ``vm.max_map_count`` kernel parameter setting to be raised above the default limit as otherwise this mechanism can not be used.
+As indicated `here <https://www.elastic.co/guide/en/elasticsearch/reference/6.5/vm-max-map-count.html>`_, ES utilizes mmapfs (memory-mapped filesystem) to store the indexes. This feature requires the ``vm.max_map_count`` kernel parameter setting to be raised above the default limit.
 
-Docker allows to set both kernel parameters (*sysctls*) as well as resource limits for processes (*ulimits*). However, whereas the latter applies to processes, and thus can be set for the entry-point process and its descendants by docker, the former is a system-wide value. This means that not all sysctls can be set *only for a container*. More precisely, `a few of them <https://docs.docker.com/engine/reference/commandline/run/#configure-namespaced-kernel-parameters-sysctls-at-runtime>`_, which are namespaced, can be set. Docker does not support changing sysctls inside of a container that also modify the host system. As a result, the expected way of setting this **will have no effect**:
+Docker allows to set both container **kernel parameters** (*sysctls*) as well as **resource limits for processes** (*ulimits*). However, whereas the latter applies to processes, and thus can be set for the entry-point process and its descendants by docker, the former is a system-wide value. This means that not all sysctls can be set *only for a container* without affecting the **host** machine. More precisely, `a few of them <https://docs.docker.com/engine/reference/commandline/run/#configure-namespaced-kernel-parameters-sysctls-at-runtime>`_, which are namespaced, can be set. Docker does not support changing sysctls inside of a container that also modify the host system. As a result, the expected way of setting this **will have no effect**:
 
 .. code-block:: diff
 
@@ -652,21 +652,21 @@ Docker allows to set both kernel parameters (*sysctls*) as well as resource limi
 
 ES6 container will not start if this limit is too low. At this point, there are basically 2 choices:
 
-#. Disable the use of mmpafs for ES via the setting ``node.store.allow_mmapfs``. This way, ES will use a `different store type <https://www.elastic.co/guide/en/elasticsearch/reference/6.5/index-modules-store.html>`_ for indices and there's no need to configure tke kernel parameter. This approach would look like this:
+1. Disable the use of mmpafs for ES via the setting ``node.store.allow_mmapfs``. This way, ES will use a `different store type <https://www.elastic.co/guide/en/elasticsearch/reference/6.5/index-modules-store.html>`_ for indices and there's no need to configure tke kernel parameter. This approach would look like this:
 
-  .. code-block:: diff
+   .. code-block:: diff
 
-      search:
-        image: elasticsearch:6.5.4
-     +  environment:
-     +    - node.store.allow_mmapfs=false
+     search:
+       image: elasticsearch:6.5.4
+    +  environment:
+    +    - node.store.allow_mmapfs=false
 
 
-#. Change the limit in the host operating system. For the case of Linux, this kernel parameter can be changed as follows:
+2. Change the limit in the host operating system. For the case of Linux, this kernel parameter can be changed as follows:
 
-  .. code-block:: bash
+   .. code-block:: bash
 
-   host-machine$ sudo sysctl -w vm.max_map_count=262144
+     host-machine$ sudo sysctl -w vm.max_map_count=262144
 
 For the sake of simplicity, this tutorial uses the first method (changing the store type). For a production setting, that would not be the best fit.
 
