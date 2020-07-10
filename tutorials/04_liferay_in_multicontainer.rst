@@ -698,7 +698,7 @@ To **disable swapping**, we'll add the ``bootstrap.memory_lock: true`` to the ES
  +  ulimits:
  +    memlock: -1
 
-The **file descriptors** setting is concerned with the maximum number of opened files for a given user, in this case, the user running the Elasticsearch process. ES sets its lower limit aboce 65535. This can be achieved via *ulimit* as follows:
+The **file descriptors** setting is concerned with the maximum number of opened files for a given user, in this case, the user running the Elasticsearch process. ES sets its lower limit above 65535. This can be achieved via *ulimit* as follows:
 
 .. code-block:: diff
 
