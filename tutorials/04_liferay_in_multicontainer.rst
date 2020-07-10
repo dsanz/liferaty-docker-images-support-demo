@@ -682,7 +682,7 @@ ES6 container will not start if this limit is too low. At this point, there are 
 
 For the sake of simplicity, this tutorial uses the first method (changing the store type). For a production setting, that would not be the best fit.
 
-To **disable swapping**, we'll add the ``bootstrap.memory_lock: true`` to the ES6 configuration file, which instructs the JVM to lock the heap in memory. ES may not be able to lock this amount of memory due to ``elasticsearch`` not having that limit set, we must specify that limit to "unlimited". All this can be done from the docker-compose file s follows:
+To **disable swapping**, we'll add the ``bootstrap.memory_lock: true`` to the ES6 configuration file, which instructs the JVM to lock the heap in memory. ES may not be able to lock this amount of memory due to ``elasticsearch`` user not having that limit set, we must specify that limit to "unlimited". All this can be done from the docker-compose file s follows:
 
 .. code-block:: diff
 
