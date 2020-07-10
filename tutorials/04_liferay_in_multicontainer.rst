@@ -590,7 +590,7 @@ Configuring the ES6 container requires some extra tweaking which will allow to i
 Configuring the ES6 container: sysctls, ulimits, plugins and environment
 ------------------------------------------------------------------------
 
-Our first attempt to add a search service would look like `sample #9 <04_files/09_liferay_mysql_es_bare.yml>`_:
+Our first attempt to add a search service would look like `sample #9 <04_files/09_liferay_mysql_es6_bare.yml>`_:
 
 .. code-block:: diff
 
