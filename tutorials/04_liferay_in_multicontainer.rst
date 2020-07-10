@@ -587,8 +587,8 @@ As a result, there is no way to match jdk versions between containers, not to me
 
 Configuring the ES6 container requires some extra tweaking which will allow to illustrate other directives in the docker-compose. This tutorial will show some of the practises described in the `Install ES with Docker <https://www.elastic.co/guide/en/elasticsearch/reference/6.5/docker.html>`_, the `Important System Configuration <https://www.elastic.co/guide/en/elasticsearch/reference/6.5/system-config.html>`_ and `Important Elastic Search Configuration <https://www.elastic.co/guide/en/elasticsearch/reference/6.5/important-settings.html>`_.
 
-Configuring the ES6 container: sysctls, ulimits, plugins and environment
-------------------------------------------------------------------------
+Configuring the ES6 container
+------------------------------
 
 Our first attempt to add a search service would look like `sample #9 <04_files/09_liferay_mysql_es6_bare.yml>`_:
 
@@ -635,7 +635,18 @@ One could expect this to at least start the ES container, even if it just launch
 
 ES6 requires some system-level changes to function properly. This tutorial reviews some of them to better understand the decisions made to run the container.
 
-As indicated `here <https://www.elastic.co/guide/en/elasticsearch/reference/6.5/vm-max-map-count.html>`_, ES utilizes mmapfs (memory-mapped filesystem) to store the indexes. This feature requires the ``vm.max_map_count`` kernel parameter setting to be raised above the default limit.
+ES6 System configuration: ulimits and sysctls
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+There are `4 things <https://www.elastic.co/guide/en/elasticsearch/reference/6.5/system-config.html>`_ to consider here:
+
+* `Disable swapping <https://www.elastic.co/guide/en/elasticsearch/reference/6.5/setup-configuration-memory.html>`_
+* `File descriptors <https://www.elastic.co/guide/en/elasticsearch/reference/6.5/file-descriptors.html>`_
+* `Number of threads <https://www.elastic.co/guide/en/elasticsearch/reference/6.5/max-number-of-threads.html>`_
+* `Virtual memory <https://www.elastic.co/guide/en/elasticsearch/reference/6.5/vm-max-map-count.html>`_
+
+Reason to consider these is that ES switches to *production mode* once a network setting is configured. ES containers try to bind to the container's IP address, so by default, they come in production mode. As aresult, a series of configuration checks are run. Failing those checks prodice ES server (and thus its container) to stop. That's why we got the previous errors.
+
+Regarding **virtual memory**, as indicated `here <https://www.elastic.co/guide/en/elasticsearch/reference/6.5/vm-max-map-count.html>`_, ES utilizes ``mmapfs`` (memory-mapped filesystem) to store the indices. This feature requires the ``vm.max_map_count`` kernel parameter setting to be raised above the default limit.
 
 Docker allows to set both container **kernel parameters** (*sysctls*) as well as **resource limits for processes** (*ulimits*). However, whereas the latter applies to processes, and thus can be set for the entry-point process and its descendants by docker, the former is a system-wide value. This means that not all sysctls can be set *only for a container* without affecting the **host** machine. More precisely, `a few of them <https://docs.docker.com/engine/reference/commandline/run/#configure-namespaced-kernel-parameters-sysctls-at-runtime>`_, which are namespaced, can be set. Docker does not support changing sysctls inside of a container that also modify the host system. As a result, the expected way of setting this **will have no effect**:
 
@@ -647,6 +658,7 @@ Docker allows to set both container **kernel parameters** (*sysctls*) as well as
         liferay-net:
           aliases:
             - elasticsearch
+ # this will not be applied
  +    sysctls:
  +      vm.max_map_count: 262144
 
@@ -659,7 +671,7 @@ ES6 container will not start if this limit is too low. At this point, there are 
      search:
        image: elasticsearch:6.5.4
     +  environment:
-    +    - node.store.allow_mmapfs=false
+    +    node.store.allow_mmapfs: "false"
 
 
 2. Change the limit in the host operating system. For the case of Linux, this kernel parameter can be changed as follows:
@@ -669,6 +681,84 @@ ES6 container will not start if this limit is too low. At this point, there are 
      host-machine$ sudo sysctl -w vm.max_map_count=262144
 
 For the sake of simplicity, this tutorial uses the first method (changing the store type). For a production setting, that would not be the best fit.
+
+To **disable swapping**, we'll add the ``bootstrap.memory_lock: true`` to the ES6 configuration file, which instructs the JVM to lock the heap in memory. ES may not be able to lock this amount of memory due to ``elasticsearch`` not having that limit set, we must specify that limit to "unlimited". All this can be done from the docker-compose file s follows:
+
+.. code-block:: diff
+
+  search:
+    image: elasticsearch:6.5.4
+    networks:
+      liferay-net:
+        aliases:
+          - elasticsearch
+    environment:
+      node.store.allow_mmapfs: "false"
+ +    bootstrap.memory_lock: "true"
+ +  ulimits:
+ +    memlock: -1
+
+The **file descriptors** setting is concerned with the maximum number of opened files for a given user, in this case, the user running the Elasticsearch process. ES sets its lower limit aboce 65535. This can be achieved via *ulimit* as follows:
+
+.. code-block:: diff
+
+  search:
+    image: elasticsearch:6.5.4
+    networks:
+      liferay-net:
+        aliases:
+          - elasticsearch
+    environment:
+      node.store.allow_mmapfs: "false"
+      bootstrap.memory_lock: "true"
+    ulimits:
+      memlock: -1
+ +    nofile: 65536
+
+Finally, the **number of threads** limits the number of threads that a user process can create. ES needs at least 4096 for this, so we have to enable this limit as follows:
+
+.. code-block:: diff
+
+  search:
+    image: elasticsearch:6.5.4
+    networks:
+      liferay-net:
+        aliases:
+          - elasticsearch
+    environment:
+      node.store.allow_mmapfs: "false"
+      bootstrap.memory_lock: "true"
+    ulimits:
+      memlock: -1
+      nofile: 65536
+ +    nproc: 4096
+
+Whereas there are more potential system configurations to check, the above is enough to start the container and pass the bootstrap checks.
+
+Configuring ES6 environment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+In this section we will consider some ES settings. For a basic (i.e. non clustered) ES setting, most of them are not needed, so we'll focus just the memory settings. Those are given to the JVM via ``ES_JAVA_OPTS`` environment variable:
+
+.. code-block:: diff
+
+  search:
+    image: elasticsearch:6.5.4
+    networks:
+      liferay-net:
+        aliases:
+          - elasticsearch
+    environment:
+      node.store.allow_mmapfs: "false"
+      bootstrap.memory_lock: "true"
+ +    ES_JAVA_OPTS: "-Xms2g -Xmx2g"
+    ulimits:
+      memlock: -1
+      nofile: 65536
+      nproc: 4096
+
+Adding ES6 plugins
+^^^^^^^^^^^^^^^^^^
+
 
 
 Configuring Liferay to use remote ES6
