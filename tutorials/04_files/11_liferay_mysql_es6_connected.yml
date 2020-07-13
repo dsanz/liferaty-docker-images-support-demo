@@ -12,7 +12,7 @@ services:
     networks:
       - liferay-net
     volumes:
-      - ./06_liferay:/mnt/liferay
+      - ./10_liferay/liferay:/mnt/liferay
   database:
     image: mysql:8.0
     environment:

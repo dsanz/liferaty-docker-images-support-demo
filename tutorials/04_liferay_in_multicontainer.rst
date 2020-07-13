@@ -739,7 +739,7 @@ Configuring ES6 environment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 In this section we will consider some ES settings. For a basic (i.e. non clustered) ES setting, most of them are not needed, so we'll focus just on the neccesary items:
 
-* **Cluster settings**: the *cluster name* gives a recognizable name to the ES6 cluster, allowing Liferay to refer to the ES server in its configuration. Also, we'll instruct this service to not form a cluster by setting the appropriate node discovery type
+* **Cluster settings**: the *cluster name* gives a recognizable name to the ES6 cluster, allowing Liferay to refer to the ES server in its configuration. Also, we'll instruct this service to not form a cluster by setting the appropriate node discovery type. We'll also give a name to the node in the cluster.
 * **Memory settings**: tell ES JVM how much heap will be used, via the ``ES_JAVA_OPTS`` environment variable.
 
 These elements will reflect in our docker-compose file as follows:
@@ -755,8 +755,9 @@ These elements will reflect in our docker-compose file as follows:
     environment:
       node.store.allow_mmapfs: "false"
       bootstrap.memory_lock: "true"
- +    cluster.name: LiferayElasticsearchCluster
  +    discovery.type: "single-node"
+ +    cluster.name: LiferayElasticsearchCluster
+ +    node.name: "LiferayElasticsearchCluster_node1"
  +    ES_JAVA_OPTS: "-Xms2g -Xmx2g"
     ulimits:
       memlock: -1
@@ -817,20 +818,7 @@ The last step is to bind-mount it into the ES container:
 
   search:
     image: elasticsearch:6.5.4
-    networks:
-      liferay-net:
-        aliases:
-          - elasticsearch
-    environment:
-      node.store.allow_mmapfs: "false"
-      bootstrap.memory_lock: "true"
-      cluster.name: LiferayElasticsearchCluster
-      discovery.type: "single-node"
-      ES_JAVA_OPTS: "-Xms2g -Xmx2g"
-    ulimits:
-      memlock: -1
-      nofile: 65536
-      nproc: 4096
+    ...
  +  volumes:
  +    - ./10_liferay/elasticsearch/plugins-6.5.4:/usr/share/elasticsearch/plugins
 
