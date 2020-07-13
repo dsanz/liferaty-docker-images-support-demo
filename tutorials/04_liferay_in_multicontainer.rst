@@ -756,7 +756,7 @@ These elements will reflect in our docker-compose file as follows:
       node.store.allow_mmapfs: "false"
       bootstrap.memory_lock: "true"
  +    discovery.type: "single-node"
- +    cluster.name: LiferayElasticsearchCluster
+ +    cluster.name: "LiferayElasticsearchCluster"
  +    node.name: "LiferayElasticsearchCluster_node1"
  +    ES_JAVA_OPTS: "-Xms2g -Xmx2g"
     ulimits:
