@@ -834,6 +834,35 @@ The last step is to bind-mount it into the ES container:
  +  volumes:
  +    - ./10_liferay/elasticsearch/plugins-6.5.4:/usr/share/elasticsearch/plugins
 
+Persisting the search indexes
+-----------------------------
+The last thing we need to have a minimal search service is to persist the search indices beyond container lifecycle. In this case, volume will do. In a clustered implementation of this service, the volume must be shared by all nodes (not covered here), however, here will use a local volume instead, as finally shown in `sample #10 <./04_files/10_liferay_mysql_es6_configured_es.yml>`_:
+
+.. code-block:: diff
+
+  search:
+    image: elasticsearch:6.5.4
+    networks:
+      liferay-net:
+        aliases:
+          - elasticsearch
+    environment:
+      node.store.allow_mmapfs: "false"
+      bootstrap.memory_lock: "true"
+      cluster.name: LiferayElasticsearchCluster
+      discovery.type: "single-node"
+      ES_JAVA_OPTS: "-Xms2g -Xmx2g"
+    ulimits:
+      memlock: -1
+      nofile: 65536
+      nproc: 4096
+    volumes:
+      - ./10_liferay/elasticsearch/plugins-6.5.4:/usr/share/elasticsearch/plugins
+ +    - volume-elasticsearch:/usr/share/elasticsearch/data
+  volumes:
+    volume-mysql:
+ +  volume-elasticsearch:
+
 Configuring Liferay to use remote ES6
 -------------------------------------
 

@@ -43,8 +43,10 @@ services:
       nproc: 4096
     volumes:
       - ./10_liferay/elasticsearch/plugins-6.5.4:/usr/share/elasticsearch/plugins
+      - volume-elasticsearch:/usr/share/elasticsearch/data
 networks:
   liferay-net:
     driver: bridge
 volumes:
   volume-mysql:
+  volume-elasticsearch:
