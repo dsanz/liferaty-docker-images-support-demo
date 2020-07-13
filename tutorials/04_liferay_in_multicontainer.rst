@@ -737,7 +737,12 @@ Whereas there are more potential system configurations to check, the above is en
 
 Configuring ES6 environment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-In this section we will consider some ES settings. For a basic (i.e. non clustered) ES setting, most of them are not needed, so we'll focus just the memory settings. Those are given to the JVM via ``ES_JAVA_OPTS`` environment variable:
+In this section we will consider some ES settings. For a basic (i.e. non clustered) ES setting, most of them are not needed, so we'll focus just on the neccesary items:
+
+* The *cluster name* gives a recognizable name to the ES6 cluster, allowing Liferay to refer to the ES server in its configuration.
+* The memory settings tell ES JVM how much heap will be used, via the ``ES_JAVA_OPTS`` environment variable.
+
+These elements will reflect in our docker-compose file as follows:
 
 .. code-block:: diff
 
@@ -750,6 +755,7 @@ In this section we will consider some ES settings. For a basic (i.e. non cluster
     environment:
       node.store.allow_mmapfs: "false"
       bootstrap.memory_lock: "true"
+ +    cluster.name: LiferayElasticsearchCluster
  +    ES_JAVA_OPTS: "-Xms2g -Xmx2g"
     ulimits:
       memlock: -1
@@ -758,8 +764,73 @@ In this section we will consider some ES settings. For a basic (i.e. non cluster
 
 Adding ES6 plugins
 ^^^^^^^^^^^^^^^^^^
+`Liferay needs some extra plugins <https://help.liferay.com/hc/es/articles/360028711132-Installing-Elasticsearch#step-three-install-elasticsearch-plugins>`_ to be installed in the ES server. By default, ES6 images don't ship them so we must provide them. Our goal is to produce a container which includes the plugins.
 
+Plugin installation in ES involves some invocations to the ES plugin installation tool, which downloads the plugin for the ES version and places it in the `plugins directory <https://www.elastic.co/guide/en/elasticsearch/plugins/6.5/_plugins_directory.html>`_. This kind of task is suited for *child images*: from the original ES6 image, we can create another one where the required plugins are installed. Being this a very reasonable option, we can achieve similar results for our purposes in a simpler way: make the plugins folder available to the container. However, please note the differences:
 
+* If plugins are added to the child image, they will be part of the original image's filesystem so will be available in all containers, which makes it easier to cluster ES. Image would weigh more than the original one. Adding/removing plugins require rebuilding the image.
+* If plugins are added to the container, they won't be part of the image's filesystem but will be in a mounted folder, which has to be made available to all containers if a ES cluster is set. Adding/removing plugins require manipulating the volume and restarting the containers.
+
+This tutorial uses the second technique as the search service won't be clustered. In order to obtain the files that will be in the volume,
+
+#. Plugins must be installed first in a ES6 container using the plugin installation tool
+#. Then, use ``docker cp`` to copy the contents of ``/usr/share/elasticsearch/plugins`` folder (this is where `plugins are installed <https://www.elastic.co/guide/en/elasticsearch/reference/6.5/rpm.html#rpm-layout>`_) into a folder in the host machine
+#. Use that folder as the bind-mount source against ``/usr/share/elasticsearch/plugins`` folder for new containers.
+
+This is how the resulting `folder <04_files/10_liferay/elasticsearch>`_ looks like:
+
+.. code-block:: bash
+
+ 10_liferay
+ └── elasticsearch
+     └── plugins-6.5.4
+         ├── analysis-icu
+         │   ├── analysis-icu-client-6.5.4.jar
+         │   ├── icu4j-62.1.jar
+         │   ├── LICENSE.txt
+         │   ├── lucene-analyzers-icu-7.5.0.jar
+         │   ├── NOTICE.txt
+         │   └── plugin-descriptor.properties
+         ├── analysis-kuromoji
+         │   ├── analysis-kuromoji-6.5.4.jar
+         │   ├── LICENSE.txt
+         │   ├── lucene-analyzers-kuromoji-7.5.0.jar
+         │   ├── NOTICE.txt
+         │   └── plugin-descriptor.properties
+         ├── analysis-smartcn
+         │   ├── analysis-smartcn-6.5.4.jar
+         │   ├── LICENSE.txt
+         │   ├── lucene-analyzers-smartcn-7.5.0.jar
+         │   ├── NOTICE.txt
+         │   └── plugin-descriptor.properties
+         └── analysis-stempel
+             ├── analysis-stempel-6.5.4.jar
+             ├── LICENSE.txt
+             ├── lucene-analyzers-stempel-7.5.0.jar
+             ├── NOTICE.txt
+             └── plugin-descriptor.properties
+
+The last step is to bind-mount it into the ES container:
+
+.. code-block:: diff
+
+  search:
+    image: elasticsearch:6.5.4
+    networks:
+      liferay-net:
+        aliases:
+          - elasticsearch
+    environment:
+      node.store.allow_mmapfs: "false"
+      bootstrap.memory_lock: "true"
+      cluster.name: LiferayElasticsearchCluster
+      ES_JAVA_OPTS: "-Xms2g -Xmx2g"
+    ulimits:
+      memlock: -1
+      nofile: 65536
+      nproc: 4096
+ +  volumes:
+ +    - ./10_liferay/elasticsearch/plugins-6.5.4:/usr/share/elasticsearch/plugins
 
 Configuring Liferay to use remote ES6
 -------------------------------------
