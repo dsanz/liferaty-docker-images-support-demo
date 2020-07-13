@@ -836,7 +836,7 @@ The last step is to bind-mount it into the ES container:
 
 Persisting the search indexes
 -----------------------------
-The last thing we need to have a minimal search service is to persist the search indices beyond container lifecycle. In this case, volume will do. In a clustered implementation of this service, the volume must be shared by all nodes (not covered here), however, here will use a local volume instead, as finally shown in `sample #10 <./04_files/10_liferay_mysql_es6_configured_es.yml>`_:
+The last thing we need to have a minimal search service is to persist the search indices beyond container lifecycle. In this case, volume will do. In a clustered implementation of this service, the volume must be shared by all nodes (not covered here), however, here will use a local volume instead, mounted on the `standard image index storage path <https://www.elastic.co/guide/en/elasticsearch/reference/6.5/docker.html>`_, as finally shown in `sample #10 <./04_files/10_liferay_mysql_es6_configured_es.yml>`_:
 
 .. code-block:: diff
 
