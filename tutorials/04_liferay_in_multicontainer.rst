@@ -853,6 +853,61 @@ The last thing we need to have a minimal search service is to persist the search
 
 Configuring Liferay to use remote ES6
 -------------------------------------
+Now that we have a reasonable search services that fits our demonstration purposes, it's time to configure Liferay to use that service. This requires 2 things:
+
+#. Configure Liferay ES connector to use the ``search`` service.
+#. Kindly ask ``liferay`` container to wait till ``search`` service is ready.
+
+In order to make ``liferay`` wait till the ``search`` service is ready, just invoke the wait-for-it twice as indicated in `wait-for-mysql-and-elasticsearch.sh <./04_files/10_liferay/liferay/scripts/wait-for-mysql_and_elasticsearch.sh>`_:
+
+.. code-block:: diff
+
+  #!/usr/bin/env bash
+  chmod a+x /opt/liferay/wait-for-it.sh
+ +bash /opt/liferay/wait-for-it.sh -s -t 60 elasticsearch:9300
+  bash /opt/liferay/wait-for-it.sh -s -t 60 database:3306
+
+Note how hostnames in this file use the names given to the services in the docker-compose.yml.
+
+It's possible to configure the ES connector from control panel, but that would require to start the liferay container unconfigured. So the 'docker' style of doing this is to provide the necessary configuration files to the container. In turn, fastest way to do this is to do such manual configuration, with minimal options, then export the ``.config`` file from system settings and providing it to new containers.
+
+The resulting ``com.liferay.portal.search.elasticsearch6.configuration.ElasticsearchConfiguration.config`` file look like this:
+
+.. code-block:: bash
+
+ bootstrapMlockAll="true"
+ operationMode="REMOTE"
+ transportAddresses=[ \
+   "elasticsearch:9300", \
+   ]
+
+Note that ES cluster name is not exported as we gave a name to the ES cluster which is the default expected by Liferay.
+
+To `provide this configuration to Liferay container <https://grow.liferay.com/people/Configuring+Liferay+use+cases#providing-new-osgi-configuration-files>`_ it's required to allow a new bind-mount from `a new place <./04_files/10_liferay/liferay/>`_ in your host machine, where the scripts and ``.config`` file will be, according to the following layout:
+
+.. code-block:: bash
+
+ 10_liferay/liferay/
+ ├── files
+ │   ├── osgi
+ │   │   └── configs
+ │   │       └── com.liferay.portal.search.elasticsearch6.configuration.ElasticsearchConfiguration.config
+ │   └── wait-for-it.sh
+ └── scripts
+     └── wait-for-mysql_and_elasticsearch.sh
+
+Therefore, the folder will be bind-mounted to a special location in the container, as illustrated by `sample #11 <./04_files/11_liferay_mysql_es6_connected.yml>`_:
+
+.. code-block:: diff
+
+  version: '3'
+  services:
+    liferay:
+      image: liferay/portal:7.2.1-ga2
+      volumes:
+ -      - ./06_liferay:/mnt/liferay
+ +      - ./10_liferay:/mnt/liferay
+
 
 Using ES7 container
 -------------------
