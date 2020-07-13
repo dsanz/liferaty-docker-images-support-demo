@@ -739,8 +739,8 @@ Configuring ES6 environment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 In this section we will consider some ES settings. For a basic (i.e. non clustered) ES setting, most of them are not needed, so we'll focus just on the neccesary items:
 
-* The *cluster name* gives a recognizable name to the ES6 cluster, allowing Liferay to refer to the ES server in its configuration.
-* The memory settings tell ES JVM how much heap will be used, via the ``ES_JAVA_OPTS`` environment variable.
+* **Cluster settings**: the *cluster name* gives a recognizable name to the ES6 cluster, allowing Liferay to refer to the ES server in its configuration. Also, we'll instruct this service to not form a cluster by setting the appropriate node discovery type
+* **Memory settings**: tell ES JVM how much heap will be used, via the ``ES_JAVA_OPTS`` environment variable.
 
 These elements will reflect in our docker-compose file as follows:
 
@@ -756,6 +756,7 @@ These elements will reflect in our docker-compose file as follows:
       node.store.allow_mmapfs: "false"
       bootstrap.memory_lock: "true"
  +    cluster.name: LiferayElasticsearchCluster
+ +    discovery.type: "single-node"
  +    ES_JAVA_OPTS: "-Xms2g -Xmx2g"
     ulimits:
       memlock: -1
@@ -824,6 +825,7 @@ The last step is to bind-mount it into the ES container:
       node.store.allow_mmapfs: "false"
       bootstrap.memory_lock: "true"
       cluster.name: LiferayElasticsearchCluster
+      discovery.type: "single-node"
       ES_JAVA_OPTS: "-Xms2g -Xmx2g"
     ulimits:
       memlock: -1
@@ -834,9 +836,6 @@ The last step is to bind-mount it into the ES container:
 
 Configuring Liferay to use remote ES6
 -------------------------------------
-
-Persisting the search indexes
------------------------------
 
 Using ES7 container
 -------------------
