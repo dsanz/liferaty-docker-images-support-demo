@@ -577,11 +577,11 @@ When using containers, image owners make the decision of what to ship in the ima
 
 Looking at ES6 available tags, we find that
 
- * ES `6.8.0 <https://hub.docker.com/layers/elasticsearch/library/elasticsearch/6.8.0/images/sha256-d0b291d7093b89017e2578932329eebe6f973a382231ff3bed716ea0951d8e9b?context=explore>`_ starts shipping jdk 12.0.1 and increases its version till jdk 14 (in ES `6.8.10 <https://hub.docker.com/layers/elasticsearch/library/elasticsearch/6.8.10/images/sha256-6c36fa585104d28d3a9e53c799a4e20058445476cadb3b3d3e789d3793eed10a?context=explore>`_
- * ES `6.7.x <https://hub.docker.com/_/elasticsearch?tab=tags&page=1&name=6.7.>`_ uses jdk 12
- * ES `6.6.x <https://hub.docker.com/_/elasticsearch?tab=tags&page=1&name=6.6.>`_ and `6.5.x <https://hub.docker.com/_/elasticsearch?tab=tags&page=1&name=6.5.>`_ use jdk 11
- * ES `6.4.x <https://hub.docker.com/_/elasticsearch?tab=tags&page=1&name=6.4.>`_ uses jdk 10
- * There are no older images in the ES 6 series
+* ES `6.8.0 <https://hub.docker.com/layers/elasticsearch/library/elasticsearch/6.8.0/images/sha256-d0b291d7093b89017e2578932329eebe6f973a382231ff3bed716ea0951d8e9b?context=explore>`_ starts shipping jdk 12.0.1 and increases its version till jdk 14 (in ES `6.8.10 <https://hub.docker.com/layers/elasticsearch/library/elasticsearch/6.8.10/images/sha256-6c36fa585104d28d3a9e53c799a4e20058445476cadb3b3d3e789d3793eed10a?context=explore>`_
+* ES `6.7.x <https://hub.docker.com/_/elasticsearch?tab=tags&page=1&name=6.7.>`_ uses jdk 12
+* ES `6.6.x <https://hub.docker.com/_/elasticsearch?tab=tags&page=1&name=6.6.>`_ and `6.5.x <https://hub.docker.com/_/elasticsearch?tab=tags&page=1&name=6.5.>`_ use jdk 11
+* ES `6.4.x <https://hub.docker.com/_/elasticsearch?tab=tags&page=1&name=6.4.>`_ uses jdk 10
+* There are no older images in the ES 6 series
 
 As a result, there is no way to match jdk versions between containers, not to mention the distribution. Although explicitly noting this fact, in this tutorial, no attempt to harmonize versions will be made. The chosen ES6 image is the `latest 6.5 series <https://hub.docker.com/layers/elasticsearch/library/elasticsearch/6.5.4/images/sha256-93109ce1d590482a06ba085943082b314ac188fcfdbffb68aebb00795c72bc8a?context=explore>`_ as it uses jdk 11 (LTS) but others could have been chosen too.
 
