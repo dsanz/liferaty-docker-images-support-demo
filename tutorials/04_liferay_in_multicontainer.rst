@@ -158,11 +158,11 @@ Looks better, but we must ensure that liferay can talk to the database if we wan
 
 Communicating both containers: the network
 ------------------------------------------
-By default, docker-compose creates a dedicated `bridge <https://docs.docker.com/network/bridge/>`_ network and makes it available to all containers, meaning that containers **in the same host** can see each other and access to the services in them without the need of exposing ports. That's the reason why mysql port (3309) is not exposed in the container, as it's not required to access mysql from outside the composition.
+By default, docker-compose creates a dedicated `bridge <https://docs.docker.com/network/bridge/>`_ network and makes it available to all containers, meaning that containers **in the same host** can see each other and access to the services in them without the need of exposing ports. That's the reason why mysql port (3306) is not exposed in the container, as it's not required to access mysql from outside the composition.
 
 We are going to create a new network for our composition to showcase the syntax. One can create several networks in a given composition, and make them available to the containers at discretion. This will affect the number of network interfaces and routing rules configured for each container.
 
-Network driver will use the **bridge** driver as all the examples are meant to run in a single docker host. This tutorial is not covering the cases where many docker hosts run a composed application, in which case, the *overlay* driver should be used.
+Network driver will use the **bridge** driver as all the examples are meant to run in a **single** docker host. This tutorial is not covering the cases where **many** docker hosts run a composed application, in which case, the *overlay* driver should be used.
 
 To create a network, add its name into the ``networks`` section. Optionally, set the ``driver`` to use. Then, reference it from the containers which should use that network. That's an excellent chance to give a host name to the container *in that network* via the ``aliases`` directive. The result would look like `sample #4 <04_files/04_liferay_mysql_networking.yml>`_:
 
@@ -197,7 +197,7 @@ As a result, services can "see" each other by specifying either the IP address o
 
 Communicating both containers: liferay configuration
 ----------------------------------------------------
-Now that containers *are* in a network with specified host names, it's time to configure liferay to use the database service. Note that this is not a **service-level** configuration (such as the name of the available networks, the ports, the alias, or the service name), but an **application-level** configuration, which is specific to the apps shipped with the container.
+Now that containers *are* in a network, and have known host names in it, it's time to configure liferay to use the database service. Note that this is not a **service-level** configuration (such as the name of the available networks, the ports, the alias, or the service name), but an **application-level** configuration, which is specific to the apps shipped with the container.
 
 In the case of Liferay, this configuration is traditionally provided via ``portal-ext.properties`` file. That's a perfectly valid solution, however, it forces us to add an extra file to the container via bind mount, and ensure those properties get updated if the docker-compose file changes. Fortunately, Liferay also provides a mechanism based on *environment variables* with specific names, which overrides portal properties.
 
@@ -337,7 +337,7 @@ Few things to note:
 
 * ``wait-for-it.sh`` is *guaranteed* to be copied into ``$liferay_home`` (/opt/liferay) before ``wait-for-mysql.sh`` is run
 * ``wait-for-mysql.sh`` can use the database service hostname as it's available in the container and resolved to the database container's IP address. If service changes its alias in the network, script must reflect that.
-* Database *port* (3306) is *reachable* from the liferay container even if it's not exposed by the service, because the database service is in the same network as the liferay service
+* Database *port* (3306) is *reachable* from the liferay container even if it's not exposed by the mysql container, because both containers are in the same network.
 
 The last element we need is to configure the bind-mount into the liferay container. Time use the ``volumes`` directive to bind-mount our file structure onto the liferay container, as shown in `sample #6 <04_files/06_liferay_mysql_synchronized.yml>`_:
 
@@ -437,7 +437,7 @@ We can see how liferay waits 9 seconds till mysql is ready to accept connections
 Adding data persistence beyond database service lifespan
 --------------------------------------------------------
 
-Subsequent runs of the above composition will be faster because ``docker-compose`` tries to reuse the containers if the configuration does not change. This means that they will be *started* rather than new ones being created. docker-compose informs what specific operation is doing to the containers:
+Subsequent runs of the above composition will be faster because ``docker-compose`` tries to reuse the containers if the configuration does not change. This means that they will be *started* rather than new ones being created. docker-compose informs about which specific operation is applying to the containers:
 
 * **Creating** means that the container did not exist in the docker host previously, so it will be created and run for the first time.
 * **Recreating** means that container already exists in the docker host and it's stopped. Its configuration in the docker-compose.yml has changed so the container can not be started again. Therefore, it is removed, then re-created with the same name and new options.
@@ -909,8 +909,16 @@ Therefore, the folder will be bind-mounted to a special location in the containe
  +      - ./10_liferay:/mnt/liferay
 
 
-Using ES7 container
--------------------
+Bonus exercise: using ES7 container
+-----------------------------------
+Goal is to create a new composition similar to the one given in `sample #11 <./04_files/11_liferay_mysql_es6_connected.yml>`_, where the ``search`` service is implemented with an ES7 container.
+
+Technically, this is really an `upgrade operation <https://help.liferay.com/hc/es/articles/360035444872-Upgrading-to-Elasticsearch-7>`_ which requires several extra steps. Here are the main challenges reader will face:
+
+#. The ES7 connector has to be downloaded from the Marketplace and installed into the containerized Liferay.
+#. As a result of installing the ES7 connector Mk app, Liferay will ask to **restart the server**. That's somehow not very docker-friendly as it implies stopping the container and ensuring that the same container is restarted later, braking container disposability. A workaround is to unpack the LPKG contents and make them available to ``$liferay_home/osgi/modules`` rather than deploying the LPGK as intended.
+#. The ES6 connector OSGi bundles have to be blacklisted so that it does not clash with the new connector
+#. The ``search`` service now requires ES7 plugins
 
 Clustering Liferay
 ==================
