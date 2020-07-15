@@ -922,6 +922,38 @@ Technically, this is really an `upgrade operation <https://help.liferay.com/hc/e
 
 Clustering Liferay
 ==================
+At this point, reader should be familiar with the basics of docker-compose.yml syntax and how the different services were built. A pertinent question would be: what's the way to create a liferay cluster?
+
+Intuitively, the answer to this question might look like this: *add more liferay service instances and cluster them*. Being this a reasonable answer, the devil is in the details. Perhaps reader is more familiar with the last part of the sentence ("... cluster them") as this requires things like configuring cluster link, sharing the DB or the documents & media storage across all nodes in the cluster. However, the first part of the sentence ("add more service instances...") may look a bit undefined.
+
+There are two approaches to "add more liferay services", each having pros and cons:
+
+* **Add independent services**: a different ``service`` directive exists for each cluster node. Container configuration is mostly replicated across each service.
+
+  .. code-block:: yaml
+
+   services:
+     liferay-node1:
+        # same network, DB, D&M storage, cluster-link configuration
+        # different ports (see below)
+     liferay-node2:
+        # same network, DB, D&M storage, cluster-link configuration
+        # different ports (see below)
+
+* **Scale the same service**: a single service is declared. Service definition includes scaling information so that container orchestrator can create and manage *service replicas* seamlessly.
+
+  .. code-block:: yaml
+
+   services:
+     liferay:
+        # same network, DB, D&M storage, cluster-link configuration
+        # no ports
+        deploy:
+          replicas: 2  # for a two-node cluster
+
+To better understand the meaning, implications and differences between both approaches, it's good to keep in mind that, in a realistic scenario, container orchestrator will utilize several host machines (i.e. docker engines) to deploy the containers, indeed, information about which machine runs which containers changes over time and is transparant from the point of view of the system user.
+
+
 
 Scaling services
 ----------------
