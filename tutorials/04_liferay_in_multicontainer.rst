@@ -908,6 +908,13 @@ Therefore, the folder will be bind-mounted to a special location in the containe
  -      - ./06_liferay:/mnt/liferay
  +      - ./10_liferay:/mnt/liferay
 
+This is a good moment to try what we've learnt so far. Some things to remember:
+
+* We used ``.env`` file to store some common names. Although a good practise, there are places where names are still hardcoded, particularly, the files we bind-moint onto the container.
+* We syncrhonized service availability via app-level logic implemented in the dependent service (``liferay`` in this case) via the ``wait-for-it.sh``
+* We tweaked some system limits in the ``search`` service to accommodate ES container requirements
+* We persisted information from the 3 services in specific volumes
+* All we've seen so far can be run in a **single host**, i.e. using just one docker engine. Multiple host settings require more advanced infrastructure such as shared volumes or network routing.
 
 Bonus exercise: using ES7 container
 -----------------------------------
@@ -922,7 +929,7 @@ Technically, this is really an `upgrade operation <https://help.liferay.com/hc/e
 
 Clustering Liferay
 ==================
-At this point, reader should be familiar with the basics of docker-compose.yml syntax and how the different services were built. A pertinent question would be: what's the way to create a liferay cluster?
+At this point, reader should be familiar with the basics of ``docker-compose.yml`` syntax and how the different services are declared. A pertinent question would be: **how to create a liferay cluster?**
 
 Intuitively, the answer to this question might look like this: *add more liferay service instances and cluster them*. Being this a reasonable answer, the devil is in the details. Perhaps reader is more familiar with the last part of the sentence ("... cluster them") as this requires things like configuring cluster link, sharing the DB or the documents & media storage across all nodes in the cluster. However, the first part of the sentence ("add more service instances...") may look a bit undefined.
 
@@ -940,7 +947,7 @@ There are two approaches to "add more liferay services", each having pros and co
         # same network, DB, D&M storage, cluster-link configuration
         # different ports (see below)
 
-* **Scale the same service**: a single service is declared. Service definition includes scaling information so that container orchestrator can create and manage *service replicas* seamlessly.
+* **Scale the same service**: a single ``service`` is declared for all liferay instances. Container orchestrator can create and manage *service replicas* seamlessly. Service definition might include scaling information to inform the orchestrator:
 
   .. code-block:: yaml
 
