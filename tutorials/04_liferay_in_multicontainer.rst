@@ -1020,7 +1020,7 @@ As you can see, it's not possible to bind the second replica's port onto host po
 
 This is how a scalable liferay service would look like (see `sample #12 <./04_files/12_liferay_scalable_mysql_es6.yml>`_:
 
- .. code-block:: diff
+.. code-block:: diff
 
   services:
     liferay:
