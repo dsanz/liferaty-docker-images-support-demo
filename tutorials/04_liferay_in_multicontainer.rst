@@ -958,9 +958,22 @@ There are two approaches to "add more liferay services", each having pros and co
         deploy:
           replicas: 2  # for a two-node cluster
 
-To better understand the meaning, implications and differences between both approaches, it's good to keep in mind that, in a realistic scenario, container orchestrator will utilize several host machines (i.e. docker engines) to deploy the containers, indeed, information about which machine runs which containers changes over time and is transparant from the point of view of the system user.
+To better understand the meaning, implications and differences between both approaches, it's good to keep in mind that, in a realistic scenario, container orchestrator will utilize several host machines (i.e. docker engines) to deploy the containers, indeed, information about which machine runs which containers changes over time and is transparant from the point of view of the system user. This has implications in the exposed service ports, as two services in the same host can not bind to the same port in the host. We'll deal with this later on.
 
+With this in mind, here are the main implications of using "add independent services" approach:
 
+* Fixed maximum cluster size
+* Container configuration must be replicated across all service definitions, which makes it harder to make changes.
+* Complex port management: each liferay cluster node must bind to different ports in the hosts, unless constraints are set to run each service in a different host machine
+
+In contrast, here are the "scale the same service" implications:
+
+* Variable maximum cluster size
+* Consistent service definition thanks to a single container configuration
+* Simpler port management: each node does not need to bind ports to the host. Orchestrator can access the service via ingress networking.
+* Leverages orchestrator scaling and management features
+
+At the time of writing, googling "liferay cluster docker" does not bring much examples of compositions. Those available mostly use the "independent services approach" (see `amusarra <https://github.com/amusarra/docker-liferay-portal>`_ or `borxa <https://github.com/borxa/docker-liferay7-cluster>`_ github repos to find some). Let's use the "scaling service" approach in this tutorial.
 
 Scaling services
 ----------------
