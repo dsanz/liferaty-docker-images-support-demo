@@ -1041,12 +1041,110 @@ This is how a scalable liferay service would look like (see `sample #12 <./04_fi
 
 **Note about docker-compose and deploy directive**: docker-compose `ignores <https://docs.docker.com/compose/compose-file/#deploy>`_ the ``deploy`` directive, which is meant to be processed by docker swarm. We provide it here for illustrative purposes, and to make the descriptor usable by docker swarm later.
 
-Although this sample can scale the liferay service using ``docker-compose``, please note that **we're far from having a liferay cluster**. Rather, we have 2 independent containers running against the same database, indexer and D&M storage. Furthermore, both services have to be accessed separatedly via <containerIP>:8080 as ports are no longer bound to the host.
+Although this sample can scale the liferay service using ``docker-compose``, please note that **we're far from having a liferay cluster**. Rather, we have 2 independent containers running against the same database, search engine and D&M storage. Furthermore, both services have to be accessed separatedly via <containerIP>:8080 as ports are no longer bound to the host. Finally, please note that both service replicas are not guaranteed to be run in different machines. Constraints about service deployment can be specified, however, these are out of the scope of this tutorial.
 
-Configuring liferay cluster
----------------------------
+Configuring the liferay cluster
+-------------------------------
+At this point, we have a composition which supports ``liferay`` service scaling. It's time to `configure a liferay cluster <https://learn.liferay.com/dxp/7.x/en/installation-and-upgrades/setting-up-liferay-dxp/clustering-for-high-availability/clustering-for-high-availability.html>`_. Note that part of this configuration is already done for us: all service replicas share the search indices, the database connection and the documents & media storage.
 
+So, we're left with `configuring the Cluster Link <https://learn.liferay.com/dxp/7.x/en/installation-and-upgrades/setting-up-liferay-dxp/clustering-for-high-availability/configuring-cluster-link.html>`_ to enable distributed cache. This entails the definition of some portal properties, some of them deserve specific considerations when set in a containerized environment. In addition, default Cluster Link configuration defines *multicast communication over UDP*. Besides not supported natively by docker (a particular network plugin is required), multicast support offered by cloud providers is often limited. As a result, this tutorial will utilize **unicast traffic over TCP**. This requires to choose a node discovery protocol, which will be **JDBC_PING** as we already have a database service which can be leveraged for this purpose. Most of the configurations will therefore apply to JGroups, which is a dependency of Cluster Link.
 
+Let's review the `necessary changes <https://learn.liferay.com/dxp/7.x/en/installation-and-upgrades/setting-up-liferay-dxp/clustering-for-high-availability/configuring-unicast-over-tcp.html>`_ one by one.
+
+Enabling Cluster Link
+^^^^^^^^^^^^^^^^^^^^^
+
+First configuration change has to do with enabling cluster link. We can do that via environment variables:
+
+.. code-block:: diff
+
+  services:
+    liferay:
+      image: liferay/portal:7.2.1-ga2
+      environment:
+        ...
+ +      LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_ENABLED: "true"
+ +      LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_AUTODETECT_PERIOD_ADDRESS: database:3306
+
+These env vars provide the necessary properties to activate cluster link. Note that auto-detect address is set based on a host that is visible for all ``liferay`` service replicas.
+
+Configuring Cluster Link to read JGroups file
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Before moving on with the JGroups configuration content, let's make sure Liferay will read it. This translates into a couple of properties being added as environment variables:
+
+.. code-block:: diff
+
+  services:
+    liferay:
+      image: liferay/portal:7.2.1-ga2
+      environment:
+        ...
+        LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_ENABLED: "true"
+        LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_AUTODETECT_PERIOD_ADDRESS: database:3306
+ +      LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_CHANNEL_PERIOD_PROPERTIES_PERIOD_CONTROL: ${jgroups_config_file}
+ +      LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_CHANNEL_PERIOD_PROPERTIES_PERIOD_TRANSPORT_PERIOD__NUMBER0_: ${jgroups_config_file}
+
+The new ``${jgroups_config_file}`` variable will tell us where the JGroups file resides, so let's add it to the ``.env`` file:
+
+.. code-block:: diff
+
+ + jgroups_config_file=/jgroups/jdbc_ping.xml
+   mysql_user_name=mysqluser
+   mysql_user_password=test
+   mysql_database_name=lportal
+
+Now, the jgroups descriptor, named ``jdbc_ping.xml``, will be placed at the right place in the container. This entails placing it at specific point in the bind-mounted folder for the liferay container:
+
+.. code-block:: bash
+
+ ├── liferay
+ │   ├── files
+ │   │   ├── tomcat
+ │   │   │   └── webapps
+ │   │   │       └── ROOT
+ │   │   │           └── WEB-INF
+ │   │   │               └── classes
+ │   │   │                   └── jgroups
+ │   │   │                       └── jdbc_ping.xml
+
+With all these, we can work on the ``jdbc_ping.xml`` descriptor contents to enable JDBC PING node discovery.
+
+Configuring JDBC_PING node discovery
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To configure unicast traffic, jgroups needs to be told about the network interface to bind to. This information can be provided via JVM option ``-Djgroups.bind_addr=<host name or IP>``. In a containerized scenario, one can `specify the container's IP address in a network <https://docs.docker.com/compose/compose-file/#ipv4_address-ipv6_address>`_, however, this solution makes scaling not possible: the second container is not able to attach to the network with the same address, and a similar thing happens with the host name. As a result, in the "scaling services" approach, the orchestrator must choose which IPs and hostnames to use.
+
+So, how to inform JGroups, if we don't know the IP till the container is started? Well, this can't be informed in the docker-compose.yml file, as the value is not available there. Once container starts, the output of ``hostname`` command or ``SHOSTNAME`` env var value will give the piece of data we need.
+
+A potential way would be via scripting: an user-provided script would add the container's IP/hostname to the right environment variable (like `LIFERAY_JVM_OPTS or CATALINA_OPTS <https://grow.liferay.com/people/Configuring+Liferay+use+cases#set-jvm-options-for-liferay-in-the-container>`_). Unfortunately, those env variables changes only affect to the shell executing it, not to the tomcat process. So the last option here would be to directly provide a new ``setenv.sh`` file for tomcat which sets the JVM option accordingy.
+
+Fortunately, as we'll see, the JGroups config file descriptor substitutes the environment variable references for their value. Therefore, it's possible to pass the value of ``$HOSTNAME`` to JGroups bind_addr parameter, like this:
+
+.. code-block:: xml
+
+ <TCP bind_addr="${HOSTNAME}" bind_port="7800"/>
+
+This is the first piece of configuration for our JGroups file, which states the address:port pair that JGroups will bind to. Now it's time to add the node discovery protocol configuration. To `add JDBC_PING protocol <https://learn.liferay.com/dxp/7.x/en/installation-and-upgrades/setting-up-liferay-dxp/clustering-for-high-availability/configuring-unicast-over-tcp.html#jdbc-ping>' _ to the stack, we can leverage the variable substitution again to avoid hardcoding values:
+
+.. code-block:: xml
+
+ <TCP bind_addr="${HOSTNAME}" bind_port="7800"/>
+ <JDBC_PING
+   connection_url="${LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL}"
+   connection_username="${LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_USERNAME}"
+   connection_password="${LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_PASSWORD}"
+   connection_driver="${LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_DRIVER_UPPERCASEC_LASS_UPPERCASEN_AME}"/>
+
+This way of specyfying the JDBC_PING configuration allows changes to the database credentials, driver or even URL without modifying the JGroups descriptor.
+
+The rest of the file looks similar to other examples you can find.
+
+The finishing touch here is to let Liferay display the cluster node which is serving each request, by adding the following property as environment variable:
+
+.. code-block:: diff
+
+ +   LIFERAY_WEB_PERIOD_SERVER_PERIOD_DISPLAY_PERIOD_NODE: "true"
 
 Using docker swarm
 ------------------
