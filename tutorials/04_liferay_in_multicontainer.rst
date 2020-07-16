@@ -1,7 +1,7 @@
 Liferay in a multi container setting
 ************************************
 
-This tutorial will enable reader to understand and run simple examples of multicontainer applications where Liferay plays a central role. All samples are provided in separate files `in this folder <04_files/>`_, therefore, the best way to run though this tutorial is to clone the repository and try the samples.
+This tutorial will enable reader to understand and run simple examples of multicontainer applications where Liferay plays a central role, including a liferay cluster. All samples are provided in separate files `in this folder <04_files/>`_, therefore, the best way to run though this tutorial is to clone the repository and try the samples.
 
 .. contents::
 
@@ -1018,7 +1018,7 @@ As you can see, it's not possible to bind the second replica's port onto host po
 * Liferay cluster configuration must be the same across all containers: for example, specific IPs should not be required, or if they are, container must self-configure before starting Liferay. See `Configuring liferay cluster`_ for details.
 * Get rid of fixed configuration for load-balancing/sticky session: these mechanisms should be ready to work with different number of replicas (out of scope of this tutorial, see `More features`_)
 
-This is how a scalable liferay service would look like (see `sample #12 <./04_files/12_liferay_scalable_mysql_es6.yml>`_:
+This is how a scalable liferay service would look like (see `sample #12 <./04_files/12_liferay_scalable_mysql_es6.yml>`_):
 
 .. code-block:: diff
 
