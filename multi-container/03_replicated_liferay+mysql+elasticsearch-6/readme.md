@@ -58,9 +58,11 @@ In general, we'll favor simplicity and reusability in the configuration. This al
  
 Usage of env vars in the docker-compose file has some limitations, namely:
 * Variable substitution only works in the values of the docker-compose, not in the keys. This prevents us to use them to name volumes and networks. We're using fixed names for them. 
-* In the service definition, it's not possible to reuse env vars created in the dockerfile, such as $LIFERAY_HOME. They seem available only at container runtime.
+* In the service definition, it's not possible to reuse env vars created in the dockerfile, such as $LIFERAY_HOME or $HOSTAME (this one is useful for jgroups). They seem available only at container runtime.
 
-Nevertheless, the use of a .env file is still very useful. We can define values that are available to the docker engine, so that service definitions can use them. This allows to populate environment variables to different containers (mysql database user for example). In the case of Liferay, that information can be reused in the JDBC ping definition, as Jgroups substitutes variable references for their values.
+Nevertheless, the use of a .env file is still very useful. We can define values that are available to the docker engine, so that service definitions can use them. This allows to populate environment variables to different containers (mysql database user for example). 
+
+In the case of Liferay, that information can be reused in the JDBC ping definition, as Jgroups substitutes variable references for their values. That allowed us to save some headaches in obtaining the $HOSTNAME and setting the JVM options via env vars in the docker-compose file (which does not work as the target container hostname is not available at that point). It also avoids custom scripting to re-export vars like LIFERAY_JVM_OPTS or CATALINA_OPTS which changes don't take effect if made from user-provided scripts.
 
 Interesting reads: [Docker ARG, ENV and .env - a Complete Guide](https://vsupalov.com/docker-arg-env-variable-guide/)  
    

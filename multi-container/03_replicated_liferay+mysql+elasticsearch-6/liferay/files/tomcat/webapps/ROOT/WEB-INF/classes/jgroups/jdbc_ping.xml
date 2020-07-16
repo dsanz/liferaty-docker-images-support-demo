@@ -1,7 +1,7 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:org:jgroups"
         xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups.xsd">
-            <TCP bind_port="7800"/>
+            <TCP bind_addr="${HOSTNAME}" bind_port="7800"/>
 
             <JDBC_PING
                 connection_url="${LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL}"
