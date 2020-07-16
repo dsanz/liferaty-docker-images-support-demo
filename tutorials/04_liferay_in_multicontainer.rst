@@ -1125,7 +1125,7 @@ Fortunately, as we'll see, the JGroups config file descriptor substitutes the en
 
  <TCP bind_addr="${HOSTNAME}" bind_port="7800"/>
 
-This is the first piece of configuration for our JGroups file, which states the address:port pair that JGroups will bind to. Now it's time to add the node discovery protocol configuration. To `add JDBC_PING protocol <https://learn.liferay.com/dxp/7.x/en/installation-and-upgrades/setting-up-liferay-dxp/clustering-for-high-availability/configuring-unicast-over-tcp.html#jdbc-ping>' _ to the stack, we can leverage the variable substitution again to avoid hardcoding values:
+This is the first piece of configuration for our JGroups file, which states the address:port pair that JGroups will bind to. Now it's time to add the node discovery protocol configuration. To `add JDBC_PING protocol <https://learn.liferay.com/dxp/7.x/en/installation-and-upgrades/setting-up-liferay-dxp/clustering-for-high-availability/configuring-unicast-over-tcp.html#jdbc-ping>`_ _ to the stack, we can leverage the variable substitution again to avoid hardcoding values:
 
 .. code-block:: xml
 
