@@ -51,7 +51,7 @@ There are different mechanisms to scale a service, which depend on the technolog
 In this iteration, Liferay service is defined as follows:
 * No port bindings 
 * All cluster configuration is provided via properties (as env vars)
-* JDBC_ping manages jgroups views
+* JDBC_ping manages jgroups views. See iteration 04 for table cleaning logic which has been backported to this iteration
 * No changes in the cache distribution configuration 
 
 In general, we'll favor simplicity and reusability in the configuration. This allows us to speed up the iterations as a change will apply consistently where necessary. To achieve this, we'll make extensive use of environment variables so that all config files, as well as the docker-compose file, can get the values from the variables rather than hardcoding them. This is not taken to the extreme as we're just applying it to env vars provisioning: config files we put in the containers may require manual changes. 
