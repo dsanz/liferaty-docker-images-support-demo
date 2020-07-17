@@ -1040,7 +1040,7 @@ This is how a scalable liferay service would look like (see `sample #12 <./04_fi
       volumes:
         - ./10_liferay/liferay:/mnt/liferay
 
-The `deploy <https://docs.docker.com/compose/compose-file/#deploy>`_ directive informs docker-compose about the deployment and running of services.
+The `deploy <https://docs.docker.com/compose/compose-file/#deploy>`_ directive informs about the deployment and running of services.
 
  **Note about docker-compose and deploy directive**: docker-compose `ignores <https://docs.docker.com/compose/compose-file/#deploy>`_ the ``deploy`` directive, which is meant to be processed by docker swarm. We provide it here for illustrative purposes, and to make the descriptor usable by docker swarm later.
 
