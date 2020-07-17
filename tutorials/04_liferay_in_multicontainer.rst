@@ -979,9 +979,9 @@ At the time of writing, googling "liferay cluster docker" does not bring much ex
 
 Scaling services
 ----------------
-In the "Scaling services" approach, service specification indicates a desired system state where some service requires replication. This may take a declarative form (in the docker-compose.yml file) or an imperative one (via command instructing orchestrator to scale a service).
+In the *Scaling services* approach, service specification indicates a desired system state where some service requires **replication**. This may take a *declarative* form (in the docker-compose.yml file) or an *imperative* one (via command instructing orchestrator to scale a service).
 
-At this point, some differences between orchestrators start to arise. This tutorial is primarily focused to ``docker-compose``, but ``docker swarm`` will be mentioned where applicable, as both use the same file format to specify services. Please be aware that there are differences about how they process the file in terms of `ignored sections <https://docs.docker.com/compose/compose-file/#not-supported-for-docker-stack-deploy>`_.
+At this point, some differences between orchestrators start to arise. This tutorial is primarily focused to ``docker-compose``, but ``docker swarm`` will be mentioned where applicable, as both use the **same file format** to specify services. Please be aware that there are differences about how they process the file in terms of `ignored sections <https://docs.docker.com/compose/compose-file/#not-supported-for-docker-stack-deploy>`_.
 
 Anyways, defining a *scalable liferay service* is a bit more challenging as compared to the standalone counterpart. Basically, configuration must be reusable across all replicas, meaning that any per-replica difference must be configured or set up outside the service definition. To illustrate this, let's try to scale the ``liferay`` service we defined in `sample #11 <./04_files/11_liferay_mysql_es6_connected.yml>`_ using ``docker-compose`` command. First, let's start the services as stated by sample #11:
 
@@ -1015,7 +1015,7 @@ Once all services are up and running, in another shell, let's instruct docker-co
 As you can see, it's not possible to bind the second replica's port onto host port 8080 as it's already taken by the first service replica. This illustrates how carefully *scalable* services are to be defined. Some examples of this include:
 
 * Get rid of host port bindings (8080:8080) for scalable services if using docker-compose. When scaling up the service, docker-compose won't start the second one as port is already bound to the host. Note that it's possible to bind ports for replicated services using Docker swarm, see `Using docker swarm`_ for more details.
-* Get rid of setting ``container_names``: they can not be fixed as replicas are managed automatically
+* Get rid of setting ``container_name`` directive. Names can not be fixed as replicas could not be started
 * Liferay cluster configuration must be the same across all containers: for example, specific IPs should not be required, or if they are, container must self-configure before starting Liferay. See `Configuring liferay cluster`_ for details.
 * Get rid of fixed configuration for load-balancing/sticky session: these mechanisms should be ready to work with different number of replicas (out of scope of this tutorial, see `More features`_)
 
@@ -1040,7 +1040,9 @@ This is how a scalable liferay service would look like (see `sample #12 <./04_fi
       volumes:
         - ./10_liferay/liferay:/mnt/liferay
 
-**Note about docker-compose and deploy directive**: docker-compose `ignores <https://docs.docker.com/compose/compose-file/#deploy>`_ the ``deploy`` directive, which is meant to be processed by docker swarm. We provide it here for illustrative purposes, and to make the descriptor usable by docker swarm later.
+.. note::  **About docker-compose and deploy directive**
+
+ docker-compose `ignores <https://docs.docker.com/compose/compose-file/#deploy>`_ the ``deploy`` directive, which is meant to be processed by docker swarm. We provide it here for illustrative purposes, and to make the descriptor usable by docker swarm later.
 
 Although this sample can scale the liferay service using ``docker-compose``, please note that **we're far from having a liferay cluster**. Rather, we have 2 independent containers running against the same database, search engine and D&M storage. Furthermore, both services have to be accessed separatedly via <containerIP>:8080 as ports are no longer bound to the host. Finally, please note that both service replicas are not guaranteed to be run in different machines. Constraints about service deployment can be specified, however, these are out of the scope of this tutorial.
 
@@ -1126,7 +1128,7 @@ Fortunately, as we'll see, the JGroups config file descriptor substitutes the en
 
  <TCP bind_addr="${HOSTNAME}" bind_port="7800"/>
 
-This is the first piece of configuration for our JGroups file, which states the address:port pair that JGroups will bind to. Now it's time to add the node discovery protocol configuration. To `add JDBC_PING protocol <https://learn.liferay.com/dxp/7.x/en/installation-and-upgrades/setting-up-liferay-dxp/clustering-for-high-availability/configuring-unicast-over-tcp.html#jdbc-ping>`_ _ to the stack, we can leverage the variable substitution again to avoid hardcoding values:
+This is the first piece of configuration for our JGroups file, which states the address:port pair that JGroups will bind to. Now it's time to add the node discovery protocol configuration. To `add JDBC_PING protocol <https://learn.liferay.com/dxp/7.x/en/installation-and-upgrades/setting-up-liferay-dxp/clustering-for-high-availability/configuring-unicast-over-tcp.html#jdbc-ping>`_ to the stack, we can leverage the variable substitution again to avoid hardcoding values:
 
 .. code-block:: xml
 
