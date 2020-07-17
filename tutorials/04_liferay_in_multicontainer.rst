@@ -1016,7 +1016,7 @@ As you can see, it's not possible to bind the second replica's port onto host po
 
 * Get rid of host port bindings (8080:8080) for scalable services if using docker-compose. When scaling up the service, docker-compose won't start the second one as port is already bound to the host. Note that it's possible to bind ports for replicated services using Docker swarm, see `Using docker swarm`_ for more details.
 * Get rid of setting ``container_name`` directive. Names can not be fixed as replicas could not be started
-* Liferay cluster configuration must be the same across all containers: for example, specific IPs should not be required, or if they are, container must self-configure before starting Liferay. See `Configuring liferay cluster`_ for details.
+* Liferay cluster configuration must be the same across all containers: for example, specific IPs should not be required, or if they are, container must self-configure before starting Liferay. See `Configuring the liferay cluster`_ for details.
 * Get rid of fixed configuration for load-balancing/sticky session: these mechanisms should be ready to work with different number of replicas (out of scope of this tutorial, see `More features`_)
 
 This is how a scalable liferay service would look like (see `sample #12 <./04_files/12_liferay_scalable_mysql_es6.yml>`_):
