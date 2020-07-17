@@ -854,7 +854,7 @@ The last thing we need to have a minimal search service is to persist the search
 
 Configuring Liferay to use remote ES6
 -------------------------------------
-Now that we have a reasonable search services that fits our demonstration purposes, it's time to configure Liferay to use that service. This requires 2 things:
+Now that we have a functional ``search`` service that fits our demonstration purposes, it's time to configure Liferay to use it. This requires 2 things:
 
 #. Configure Liferay ES connector to use the ``search`` service.
 #. Kindly ask ``liferay`` container to wait till ``search`` service is ready.
