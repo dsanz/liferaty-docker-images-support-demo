@@ -1040,9 +1040,9 @@ This is how a scalable liferay service would look like (see `sample #12 <./04_fi
       volumes:
         - ./10_liferay/liferay:/mnt/liferay
 
-.. note::  **About docker-compose and deploy directive**
+The `deploy <https://docs.docker.com/compose/compose-file/#deploy>`_ directive informs docker-compose about the deployment and running of services.
 
- docker-compose `ignores <https://docs.docker.com/compose/compose-file/#deploy>`_ the ``deploy`` directive, which is meant to be processed by docker swarm. We provide it here for illustrative purposes, and to make the descriptor usable by docker swarm later.
+ **Note about docker-compose and deploy directive**: docker-compose `ignores <https://docs.docker.com/compose/compose-file/#deploy>`_ the ``deploy`` directive, which is meant to be processed by docker swarm. We provide it here for illustrative purposes, and to make the descriptor usable by docker swarm later.
 
 Although this sample can scale the liferay service using ``docker-compose``, please note that **we're far from having a liferay cluster**. Rather, we have 2 independent containers running against the same database, search engine and D&M storage. Furthermore, both services have to be accessed separatedly via <containerIP>:8080 as ports are no longer bound to the host. Finally, please note that both service replicas are not guaranteed to be run in different machines. Constraints about service deployment can be specified, however, these are out of the scope of this tutorial.
 
