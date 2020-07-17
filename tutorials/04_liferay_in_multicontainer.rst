@@ -1139,7 +1139,7 @@ This is the first piece of configuration for our JGroups file, which states the 
    connection_password="${LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_PASSWORD}"
    connection_driver="${LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_DRIVER_UPPERCASEC_LASS_UPPERCASEN_AME}"/>
 
-This way of specyfying the JDBC_PING configuration allows changes to the database credentials, driver or even URL without modifying the JGroups descriptor.
+This way of specifying the JDBC_PING configuration allows changes to the database credentials, driver or even URL without modifying the JGroups descriptor.
 
 The rest of the file looks similar to other examples you can find.
 
