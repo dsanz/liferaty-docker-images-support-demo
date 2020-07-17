@@ -195,8 +195,9 @@ First, we've told docker-compose to add a new network called ``liferay-net`` usi
 
 As a result, services can "see" each other by specifying either the IP address or the aliases they have in the network. This last option is really handy as it allows to **provide a container alias in other container's configuration**.
 
-Communicating both containers: liferay configuration
-----------------------------------------------------
+Configuring Liferay to use the database service
+-----------------------------------------------
+
 Now that containers *are* in a network, and have known host names in it, it's time to configure liferay to use the database service. Note that this is not a **service-level** configuration (such as the name of the available networks, the ports, the alias, or the service name), but an **application-level** configuration, which is specific to the apps shipped with the container.
 
 In the case of Liferay, this configuration is traditionally provided via ``portal-ext.properties`` file. That's a perfectly valid solution, however, it forces us to add an extra file to the container via bind mount, and ensure those properties get updated if the docker-compose file changes. Fortunately, Liferay also provides a mechanism based on *environment variables* with specific names, which overrides portal properties.
