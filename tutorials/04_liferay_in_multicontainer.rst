@@ -1101,15 +1101,15 @@ Now, the jgroups descriptor, named ``jdbc_ping.xml``, will be placed at the righ
 
 .. code-block:: bash
 
- ├── liferay
- │   ├── files
- │   │   ├── tomcat
- │   │   │   └── webapps
- │   │   │       └── ROOT
- │   │   │           └── WEB-INF
- │   │   │               └── classes
- │   │   │                   └── jgroups
- │   │   │                       └── jdbc_ping.xml
+ └── liferay
+     └── files
+         └── tomcat
+             └── webapps
+                 └── ROOT
+                     └── WEB-INF
+                         └── classes
+                             └── jgroups
+                                 └── jdbc_ping.xml
 
 With all these, we can work on the ``jdbc_ping.xml`` descriptor contents to enable JDBC PING node discovery.
 
@@ -1141,13 +1141,56 @@ This is the first piece of configuration for our JGroups file, which states the 
 
 This way of specifying the JDBC_PING configuration allows changes to the database credentials, driver or even URL without modifying the JGroups descriptor.
 
-The rest of the file looks similar to other examples you can find.
+The rest of the file contains other protocol elements which configuration does not pose any issue in terms of docker-related mechanism. We'll leave those unmodified from the defaults, i.e., the ``tcp.xml`` file sample in the ``jgroups.jar`` distribution.
 
-The finishing touch here is to let Liferay display the cluster node which is serving each request, by adding the following property as environment variable:
+There is an extra configuration step when trying to work JDBC_PING in a containerized environment. Making a container *scalable* entails avoiding explicit configuration related to IP address/container name, delegating its management to the orchestrator. Due to the dynamic nature of these elements, JGroups node identification mechanism will yield different member ids for each container.
+
+A container can be *stopped* or *killed*. When killed (-9), node has no chances to self-clean from the ping table. As a result, it's advisable to do some cleanup in the jdbc ping table to avoid pollution with zombie members. Older version of JGroups had a JDBC_PING option called ``clear_table_on_view_change`` for this purpose, howewer, it was `removed <https://github.com/belaban/JGroups/commit/45a20a205106f74e1df6e23a512754948e683a28#diff-d3c2b9831c9c676f3152782cfc055d09L105>`_ in favor of using a similar feature in the parent class (FILE_PING), called ``remove_all_data_on_view_change``, which we'll use here:
 
 .. code-block:: diff
 
- +   LIFERAY_WEB_PERIOD_SERVER_PERIOD_DISPLAY_PERIOD_NODE: "true"
+  <JDBC_PING
+     connection_url="${LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL}"
+     connection_username="${LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_USERNAME}"
+     connection_password="${LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_PASSWORD}"
+ -   connection_driver="${LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_DRIVER_UPPERCASEC_LASS_UPPERCASEN_AME}"/>
+ +   connection_driver="${LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_DRIVER_UPPERCASEC_LASS_UPPERCASEN_AME}"
+ +   remove_all_data_on_view_change="true"/>
+
+In addition, given that both ``liferay`` service and node discovery feature rely on ``database`` service , when this service starts, it makes no sense to keep old data. Therefore, as a safeguard, we can instruct mysql container to run a cleanup script upon service initialization, which would complement the JGroups native  ``remove_all_data_on_view_change`` feature. This is achieved by adding the ``--init-file``
+
+.. code-block:: diff
+
+  database:
+    image: mysql:8.0
+ +  command:
+ +    - "--init-file=/docker-entrypoint-initdb.d/clean_jgroups.sql"
+    environment: ...
+    networks:    ...
+    volumes:
+      - volume-mysql:/var/lib/mysql
+ +    - ./13_liferay/mysql:/docker-entrypoint-initdb.d
+
+This file will be run upon database service startup. Its location, relative to `13_liferay <./13_liferay>`_ folder is
+
+.. code-block:: bash
+
+ └── mysql
+     └── clean_jgroups.sql
+
+
+The finishing touch here is to let Liferay display the cluster node which is serving each request, by adding the following property as environment variable, leading to the `sample #13 <./04_files/13_liferay_cluster_mysql_es6.yml>`_:
+
+.. code-block:: diff
+
+  services:
+    liferay:
+      image: liferay/portal:7.2.1-ga2
+      environment:
+        ...
+ +      LIFERAY_WEB_PERIOD_SERVER_PERIOD_DISPLAY_PERIOD_NODE: "true"
+
+Please note that sample #13 declares bind-mounts from both the ``10_liferay/`` and ``13_liferay/`` folders onto the containers.
 
 Using docker swarm
 ------------------
