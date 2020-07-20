@@ -1171,7 +1171,7 @@ In addition, given that both ``liferay`` service and node discovery feature rely
       - volume-mysql:/var/lib/mysql
  +    - ./13_liferay/mysql:/docker-entrypoint-initdb.d
 
-This file will be run upon database service startup. Its location, relative to `13_liferay <./13_liferay>`_ folder is
+This file will be run upon database service startup. Its location, relative to `13_liferay <./04_files/13_liferay>`_ folder is
 
 .. code-block:: bash
 
