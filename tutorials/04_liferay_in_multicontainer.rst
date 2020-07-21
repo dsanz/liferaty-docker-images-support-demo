@@ -493,7 +493,7 @@ We'll leverage docker-compose to create and manage a **volume**, which will be m
 
 The **top-level** ``volumes`` directive instructs docker-compose to create two volumes called ``volume-mysql`` and ``volume-doclib``, using the default volume driver, which is the ``local`` driver, meaning that the volume is stored in the host machine and made available to the containers managed by the local docker engine.
 
-In addition, the **service-level** ``volumes`` directive associates the ``mysql-volume`` volume with the ``database`` service, indicating a mount point in the container (``/var/lib/mysql``). This allows mysql tables to be stored in the volume rather than in the container writeable layer. Similarly, the ``volume-doclib`` is associated to the ``liferay`` service, mounted in the directiry where Liferay expects the document library files to exist.
+In addition, the **service-level** ``volumes`` directive associates the ``mysql-volume`` volume with the ``database`` service, indicating a mount point in the container (``/var/lib/mysql``). This allows mysql tables to be stored in the volume rather than in the container writeable layer. Similarly, the ``volume-doclib`` is associated to the ``liferay`` service, mounted in ``/opt/liferay/data/document_library``, where Liferay expects the document library files to exist.
 
 Using variables in the docker-compose file
 ------------------------------------------
