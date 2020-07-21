@@ -1,0 +1,61 @@
+version: '3'
+services:
+  liferay:
+    image: liferay/portal:7.2.1-ga2
+    environment:
+      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_DRIVER_UPPERCASEC_LASS_UPPERCASEN_AME: com.mysql.cj.jdbc.Driver
+      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL: jdbc:mysql://database:3306/${mysql_database_name}?useUnicode=true&characterEncoding=UTF-8&useFastDateParsing=false
+      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_USERNAME: ${mysql_user_name}
+      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_PASSWORD: ${mysql_user_password}
+      LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_ENABLED: "true"
+      LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_AUTODETECT_PERIOD_ADDRESS: database:3306
+      LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_CHANNEL_PERIOD_PROPERTIES_PERIOD_CONTROL: ${jgroups_config_file}
+      LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_CHANNEL_PERIOD_PROPERTIES_PERIOD_TRANSPORT_PERIOD__NUMBER0_: ${jgroups_config_file}
+      LIFERAY_WEB_PERIOD_SERVER_PERIOD_DISPLAY_PERIOD_NODE: "true"
+    deploy:
+      replicas: 2
+    networks:
+      - liferay-net
+    volumes:
+      - ./13_liferay/liferay:/mnt/liferay
+  database:
+    image: mysql:8.0
+    #command:
+    #  - "--init-file=/docker-entrypoint-initdb.d/clean_jgroups.sql"
+    environment:
+      MYSQL_ROOT_PASSWORD: testroot
+      MYSQL_DATABASE: ${mysql_database_name}
+      MYSQL_USER: ${mysql_user_name}
+      MYSQL_PASSWORD: ${mysql_user_password}
+    networks:
+      liferay-net:
+        aliases:
+          - database
+    volumes:
+      - volume-mysql:/var/lib/mysql
+      - ./13_liferay/mysql:/docker-entrypoint-initdb.d
+  search:
+    image: elasticsearch:6.5.4
+    networks:
+      liferay-net:
+        aliases:
+          - elasticsearch
+    environment:
+      node.store.allow_mmapfs: "false"
+      discovery.type: "single-node"
+      cluster.name: "LiferayElasticsearchCluster"
+      node.name: "LiferayElasticsearchCluster_node1"
+      ES_JAVA_OPTS: "-Xms2g -Xmx2g"
+    ulimits:
+      memlock: -1
+      nofile: 65536
+      nproc: 4096
+    volumes:
+      - ./10_liferay/elasticsearch/plugins-6.5.4:/usr/share/elasticsearch/plugins
+      - volume-elasticsearch:/usr/share/elasticsearch/data
+networks:
+  liferay-net:
+    driver: overlay
+volumes:
+  volume-mysql:
+  volume-elasticsearch:

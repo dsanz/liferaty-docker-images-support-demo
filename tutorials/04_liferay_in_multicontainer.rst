@@ -1014,7 +1014,7 @@ Once all services are up and running, in another shell, let's instruct docker-co
 
 As you can see, it's not possible to bind the second replica's port onto host port 8080 as it's already taken by the first service replica. This illustrates how carefully *scalable* services are to be defined. Some examples of this include:
 
-* Get rid of host port bindings (8080:8080) for scalable services if using docker-compose. When scaling up the service, docker-compose won't start the second one as port is already bound to the host. Note that it's possible to bind ports for replicated services using Docker swarm, see `Using docker swarm`_ for more details.
+* Get rid of host port bindings (8080:8080) for scalable services if using docker-compose. When scaling up the service, docker-compose won't start the second one as port is already bound to the host. Note that it's possible to bind ports for replicated services using Docker swarm, see `Some notes about using docker swarm`_ for more details.
 * Get rid of setting ``container_name`` directive. Names can not be fixed as replicas could not be started
 * Liferay cluster configuration must be the same across all containers: for example, specific IPs should not be required, or if they are, container must self-configure before starting Liferay. See `Configuring the liferay cluster`_ for details.
 * Get rid of fixed configuration for load-balancing/sticky session: these mechanisms should be ready to work with different number of replicas (out of scope of this tutorial, see `More features`_)
@@ -1235,9 +1235,105 @@ Watch the logs so that you get the container name for the second instance, then 
 * In the second node, reload the page. Assert asset publisher portlet is shown. Delete the portlet from the page
 * In the first node, reload the page. Portlet should dissappear.
 
+Some notes about using docker swarm
+-----------------------------------
+
+Docker swarm is the `orchestrator shipped with docker <https://docs.docker.com/engine/swarm/>`_. As explained in `swarm key concepts <https://docs.docker.com/engine/swarm/key-concepts/>`_, a swarm is made up by *nodes* running docker engine. It's not a goal of this tutorial to provide details about docker swarm management and related topics. The liferay cluster application was designed to work in a swarm as much as possible. Tutorial just summarizes some considerations in case reader attempts to run the application on a multi-node swarm, and illustrates other issues that can be found even if a single-node swarm is used.
+
+About networking in a multi-node swarm
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The swarm offers *load balancing* features, meaning that a service deployed in the swarm can be accessed through any node, no matter if the service in question is running in the node or not. This is due to the *ingress* network, which is the base foundation for the `routing mesh <https://docs.docker.com/engine/swarm/ingress/>`_, in charge of delivering network traffic from outside the swarm. Please note that routing mesh can be bypassed, which implies publishing ports only in specific swarm nodes.
+
+Besides the routing mesh, services can define additional networks to communicate with other services in the swarm. Given that docker swarm is meant to involve many docker engines running in different host machines, the default network driver, if none is specified, is ``overlay``. Overlay networks are distributed among multiple Docker daemon hosts. So, a first adjustment in our application would be the network driver:
+
+.. code-block:: diff
+
+  networks:
+    liferay-net:
+ -    driver: bridge
+ +    driver: overlay
+
+This prepares our application to be run in a multi-host docker system.
+
+In addition, using a swarm would allow our application to publish the port 8080 across the swarm for the ``liferay`` service. This is possible if each instance of the service runs on a different node in the swarm. If you plan to run the liferay cluster in a single host swarm, no ports should be published as service replicas can't bind to the same port in the same host.
+
+About services in a multi-node swarm
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Using an overlay network is not enough to make the application runnable in multi-host system. Bind-mounts are not portable across hosts, neither local volumes are. As a result, to make this a true distributed liferay clustered application, all information we provide to the services must be available across the entire swarm.
+
+Therefore, some adjustments must be made in the application descriptor:
+
+ * Using distributed `volume drivers <https://docs.docker.com/engine/extend/legacy_plugins/#volume-plugins>`_ to define the different volumes for the ``database``, ``search`` and ``liferay`` (documents & media) storage.
+ * Substituting bind-mounts by distributed volumes or, alternatively, create child docker images where the bind-mounted files are part of the image layered filesystem.
+
+Nevertheless, for a single-node swarm, these considerations do not apply.
+
+About differences in the file format: docker stack vs docker-compose
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Docker swarm obeys the ``replicas`` directive in the ``deploy`` section, so this specification is part of the *desired system state* to the eyes of docker swarm. In docker terms, running the application is *deploying the stack* described in the docker-compose.yml file into the swarm.
+
+In contrast, docker swarm ignores the ``ulimits`` section. This is a caveat for the ``search`` service as it requires some of those to be set. There are some workarounds, the simplest one being disabling memory lock configuration:
+
+.. code-block:: diff
+
+  search:
+    environment:
+      node.store.allow_mmapfs: "false"
+ -    bootstrap.memory_lock: "true"
+      cluster.name: LiferayElasticsearchCluster
+      discovery.type: "single-node"
+      ES_JAVA_OPTS: "-Xms2g -Xmx2g"
+
+The other limits, as opposed to docker-compose, are not problematic as docker swarm sets different defaults, as it can be checked when running the appropriate command in the search container:
+
+.. code-block:: bash
+
+ [root@67cf8976be81 elasticsearch]# prlimit --verbose
+ RESOURCE   DESCRIPTION                             SOFT      HARD UNITS
+ ...
+ MEMLOCK    max locked-in-memory address space     65536     65536 bytes
+ ...
+ NOFILE     max number of open files             1048576   1048576
+ NPROC      max number of processes            unlimited unlimited
+ ...
+
+Finally, docker compose does not support reading the .env file. As a result, in order to keep taking advantage of this mechanism, a little extra step in the ``docker stack`` command invocation is required (see below).
+
+Running the application in docker swarm
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To set up the swarm, we need to **join** the docker host to it. This operation switches the docker engine installed in your machine to `run in swarm mode <https://docs.docker.com/engine/swarm/swarm-mode/>`_:
+
+.. code-block:: bash
+
+ $ docker swarm init
+
+From now on, docker-compose invocation will warn about the fact that the engine is in swarm mode. In addition, it's now possible to call ``docker stack`` service API CLI to deploy service stacks.
+
+In order to reuse the docker-compose.yml file contents together with the .env variables, we have to either substitute the values in the file prior to deploy the stack or put all variables in the process environment, then run the command. The latter would yield something like this (refer to `sample #14 <./04_files/14_liferay_cluster_myslq_es6_overlay.yml>`_ for details):
+
+.. code-block:: bash
+
+  $ env $(cat .env | sed -r 's/^\s*#.*$//g') docker stack deploy --compose-file 14_liferay_cluster_myslq_es6_overlay.yml sample14
+
+Note that ``sample14`` is the name we give to the **stack**, so that we can refer to all its services as a whole.
+
+To stop this application, just remove the stack:
+
+.. code-block:: bash
+
+ $ docker stack rm sample14
+
+This will delete all associated services (and containers), networks and secrets, but not volumes.
 
 More features
--------------
+^^^^^^^^^^^^^
+At this point, reader might realize that our application, though functional, lacks many features which are common in real-life installations, namely:
+
+*
 Routing mesh, load balancing, sticky session vs tomcat session replication
 
 
