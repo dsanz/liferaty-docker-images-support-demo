@@ -1229,10 +1229,10 @@ Once the first instance of the `liferay` service starts, you can scale it:
 
 Watch the logs so that you get the container name for the second instance, then repeat the steps above to access that instance via IP address. You can then test cache replication as usual:
 
- * Log in as test in both nodes
- * In the first node, add an asset publisher portlet to the welcome page
- * In the second node, reload the page. Assert asset publisher portlet is shown. Delete the portlet from the page
- * In the first node, reload the page. Portlet should dissappear.
+* Log in as test in both nodes
+* In the first node, add an asset publisher portlet to the welcome page
+* In the second node, reload the page. Assert asset publisher portlet is shown. Delete the portlet from the page
+* In the first node, reload the page. Portlet should dissappear.
 
 
 More features
