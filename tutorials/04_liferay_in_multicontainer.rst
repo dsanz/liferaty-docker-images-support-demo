@@ -1171,7 +1171,7 @@ In addition, given that both ``liferay`` service and node discovery feature rely
       - volume-mysql:/var/lib/mysql
  +    - ./13_liferay/mysql:/docker-entrypoint-initdb.d
 
-This file will be run upon database service startup. Its location, relative to `13_liferay <./04_files/13_liferay>`_ folder is
+This file will be run upon database service startup. Its location, relative to `13_liferay <./04_files/13_liferay>`_ folder, is
 
 .. code-block:: bash
 
@@ -1192,8 +1192,48 @@ The finishing touch here is to let Liferay display the cluster node which is ser
 
 Please note that sample #13 declares bind-mounts from both the ``10_liferay/`` and ``13_liferay/`` folders onto the containers.
 
-Using docker swarm
-------------------
+Wrapup: running the cluster
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Let's review what we have so far and how to use it. Our multicontainer application runs a *scalable* liferay cluster, conecected to the corresponding database and search services. Liferay cluster is configured to use jdbc ping over TCP unicast traffic, backed by the database service.
+
+The application does not include a reverse proxy acting as front for the ``liferay`` service, therefore, each cluster node has to be reached indivicually. The node serving a request is shown in the response page.
+
+You can run this application using docker-compose as follows:
+
+.. code-block:: bash
+
+ docker-compose -f 13_liferay_cluster_mysql_es6.yml up
+
+Remember that this application is not exposing ports for the ``liferay`` service, therefore, in order to access liferay, it's required to know the container's IP address:
+
+.. code-block:: bash
+
+ $ docker container ls
+ CONTAINER ID        IMAGE                      COMMAND                  CREATED             STATUS                   PORTS                                     NAMES
+ c5a314b03efc        mysql:8.0                  "docker-entrypoint.s…"   24 hours ago        Up 2 minutes             3306/tcp, 33060/tcp                       04_files_database_1
+ 66e9c19850c0        liferay/portal:7.2.1-ga2   "/bin/sh -c /usr/loc…"   24 hours ago        Up 2 minutes (healthy)   8000/tcp, 8009/tcp, 8080/tcp, 11311/tcp   04_files_liferay_1
+ c7723749c8d2        elasticsearch:6.5.4        "/usr/local/bin/dock…"   7 days ago          Up 2 minutes             9200/tcp, 9300/tcp                        04_files_search_1
+
+ $ docker exec 04_files_liferay_1 ifconfig
+ eth0      Link encap:Ethernet  HWaddr 02:42:AC:1B:00:03
+           inet addr:172.27.0.3  Bcast:172.27.255.255  Mask:255.255.0.0
+ ...
+
+With this information, liferay service is accessible via http://172.27.0.3:8080
+
+Once the first instance of the `liferay` service starts, you can scale it:
+
+.. code-block:: bash
+
+ docker-compose -f 13_liferay_cluster_mysql_es6.yml up -d --scale liferay=2
+
+Watch the logs so that you get the container name for the second instance, then repeat the steps above to access that instance via IP address. You can then test cache replication as usual:
+
+ * Log in as test in both nodes
+ * In the first node, add an asset publisher portlet to the welcome page
+ * In the second node, reload the page. Assert asset publisher portlet is shown. Delete the portlet from the page
+ * In the first node, reload the page. Portlet should dissappear.
+
 
 More features
 -------------
