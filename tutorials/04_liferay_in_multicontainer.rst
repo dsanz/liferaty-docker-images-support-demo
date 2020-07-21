@@ -1193,7 +1193,8 @@ The finishing touch here is to let Liferay display the cluster node which is ser
 Please note that sample #13 declares bind-mounts from both the ``10_liferay/`` and ``13_liferay/`` folders onto the containers.
 
 Wrapup: running the cluster
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+---------------------------
+
 Let's review what we have so far and how to use it. Our multicontainer application runs a *scalable* liferay cluster, conecected to the corresponding database and search services. Liferay cluster is configured to use jdbc ping over TCP unicast traffic, backed by the database service.
 
 The application does not include a reverse proxy acting as front for the ``liferay`` service, therefore, each cluster node has to be reached indivicually. The node serving a request is shown in the response page.
