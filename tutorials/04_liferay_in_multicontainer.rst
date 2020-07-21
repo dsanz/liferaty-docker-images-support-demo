@@ -451,7 +451,7 @@ By default, database container will store database files on the container writea
 
 As you may have guessed from the above statements, relying on the writable layer of the container to store the database tables seems not the best idea: database files shall be stored outside of the container filesystem for optimum performance and to enable container disposability. This can be done by delegating the storage of a specific directory in the container to an external storage device (see `Providing files to the container <https://grow.liferay.com/people/The+Liferay+Container+Lifecycle#providing-files-to-the-container>`_ for details).
 
-We'll leverage docker-compose to create and manage a **volume**, which will be mounted on the ``/var/lib/mysql`` directory in the container. That directory is the place where mysql stores all database files. This time, we'll not use a bind mount but a real volume, which requires some extra directives as shown in `sample #7 <04_files/07_liferay_mysql_permanent_storage.yml>`_:
+We'll leverage docker-compose to create and manage a **volume**, which will be mounted on the ``/var/lib/mysql`` directory in the container. That directory is the place where mysql stores all database files. Same considerations apply for the documents & media storage in liferay ``service``. We'll not use a bind mount but a real volume, which requires some extra directives as shown in `sample #7 <04_files/07_liferay_mysql_permanent_storage.yml>`_:
 
 .. code-block:: diff
 
@@ -470,6 +470,7 @@ We'll leverage docker-compose to create and manage a **volume**, which will be m
         - liferay-net
       volumes:
         - ./06_liferay:/mnt/liferay
+ +      - volume-doclib:/opt/liferay/data/document_library
     database:
       image: mysql:8.0
       environment:
@@ -488,10 +489,11 @@ We'll leverage docker-compose to create and manage a **volume**, which will be m
       driver: bridge
  +volumes:
  +  volume-mysql:
+ +  volume-doclib:
 
-The **top-level** ``volumes`` directive instructs docker-compose to create a volume called ``volume-mysql`` using the default volume driver, which is the ``local`` driver, meaning that the volume is stored in the host machine and made available to the containers managed by the local docker engine.
+The **top-level** ``volumes`` directive instructs docker-compose to create two volumes called ``volume-mysql`` and ``volume-doclib``, using the default volume driver, which is the ``local`` driver, meaning that the volume is stored in the host machine and made available to the containers managed by the local docker engine.
 
-In addition, the **service-level** ``volumes`` directive associates the ``mysql-volume`` volume with the ``database`` service, indicating a mount point in the container (``/var/lib/mysql``). This allows mysql tables to be stored in the volume rather than in the container writeable layer.
+In addition, the **service-level** ``volumes`` directive associates the ``mysql-volume`` volume with the ``database`` service, indicating a mount point in the container (``/var/lib/mysql``). This allows mysql tables to be stored in the volume rather than in the container writeable layer. Similarly, the ``volume-doclib`` is associated to the ``liferay`` service, mounted in the directiry where Liferay expects the document library files to exist.
 
 Using variables in the docker-compose file
 ------------------------------------------
@@ -513,10 +515,7 @@ The last step in this section addresses the problem of ensuring consistency acro
  +      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_PASSWORD: ${mysql_user_password}
       ports:
         - 8080:8080
-      networks:
-        - liferay-net
-      volumes:
-        - ./06_liferay:/mnt/liferay
+      ...
     database:
       image: mysql:8.0
       environment:
@@ -533,11 +532,6 @@ The last step in this section addresses the problem of ensuring consistency acro
             - database
       volumes:
         - volume-mysql:/var/lib/mysql
-  networks:
-    liferay-net:
-      driver: bridge
-  volumes:
-    volume-mysql:
 
 Besides consistency, using variables avoids hardcoding values which may not need to be preset or even made public (like passwords). Please note that there are more advanced ways to `share secrets <https://docs.docker.com/compose/compose-file/#secrets>`_ between containers, but these lie out of the scope of this tutorial.
 
@@ -608,10 +602,7 @@ Our first attempt to add a search service would look like `sample #9 <04_files/0
  +        aliases:
  +          - elasticsearch
   networks:
-    liferay-net:
-      driver: bridge
-  volumes:
-    volume-mysql:
+  ...
 
 One could expect this to at least start the ES container, even if it just launched an isolated container. However, we get some errors even before search container can finish its own startup:
 
@@ -850,6 +841,7 @@ The last thing we need to have a minimal search service is to persist the search
  +    - volume-elasticsearch:/usr/share/elasticsearch/data
   volumes:
     volume-mysql:
+    volume-doclib:
  +  volume-elasticsearch:
 
 Configuring Liferay to use remote ES6
@@ -1037,8 +1029,7 @@ This is how a scalable liferay service would look like (see `sample #12 <./04_fi
  +      replicas: 2
       networks:
         - liferay-net
-      volumes:
-        - ./10_liferay/liferay:/mnt/liferay
+      ...
 
 The `deploy <https://docs.docker.com/compose/compose-file/#deploy>`_ directive informs about the deployment and running of services.
 

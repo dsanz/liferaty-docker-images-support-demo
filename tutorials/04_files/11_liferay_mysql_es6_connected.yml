@@ -13,6 +13,7 @@ services:
       - liferay-net
     volumes:
       - ./10_liferay/liferay:/mnt/liferay
+      - volume-doclib:/opt/liferay/data/document_library
   database:
     image: mysql:8.0
     environment:
@@ -51,4 +52,5 @@ networks:
     driver: bridge
 volumes:
   volume-mysql:
+  volume-doclib:
   volume-elasticsearch:
