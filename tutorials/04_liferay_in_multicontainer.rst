@@ -1321,7 +1321,7 @@ To stop this application, just remove the stack:
 This will delete all associated services (and containers), networks and secrets, but not volumes.
 
 More features and final thoughts
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------------
 
 At this point, reader might realize that our application, though functional, lacks many features which are common in real-life installations. We provide some below:
 
