@@ -9,4 +9,4 @@ Index:
 
 * `Basic Operations tutorial <00_basic_liferay_container_operations.rst>`_ covers some essential tasks related to container management as well as some fundamental concepts about our Liferay images. It complements levels 1d, 2d and 2e sections in the skillmap
 * `Advanced Operations tutorial <03_advanced_liferay_container_operations.rst>`_ covers some of the advanced operations described in level 3b, and is also related to the knowledge acquired in levels 2b, 2c and 3c.
-* `Liferay in multi-container setting  <04_liferay_in_multicontainer.rst>`_ covers the basics to create multi-container orchestrated Liferay-based applications, including clustering Liferay containers. It compleet level 3a in the sillmap.
+* `Liferay in multi-container setting  <04_liferay_in_multicontainer.rst>`_ covers the basics to create multi-container orchestrated Liferay-based applications, including clustering Liferay containers. It complements level 3a in the sillmap.
