@@ -1256,8 +1256,8 @@ Using an overlay network is not enough to make the application runnable in multi
 
 Therefore, some adjustments must be made in the application descriptor:
 
- * Using distributed `volume drivers <https://docs.docker.com/engine/extend/legacy_plugins/#volume-plugins>`_ to define the different volumes for the ``database``, ``search`` and ``liferay`` (documents & media) storage.
- * Substituting bind-mounts by distributed volumes or, alternatively, create child docker images where the bind-mounted files are part of the image layered filesystem.
+* Using distributed `volume drivers <https://docs.docker.com/engine/extend/legacy_plugins/#volume-plugins>`_ to define the different volumes for the ``database``, ``search`` and ``liferay`` (documents & media) storage. This will make volumes available to all nodes in the swarm.
+* Substituting bind-mounts by distributed volumes or, alternatively, create child docker images where the bind-mounted files are part of the image layered filesystem.
 
 Nevertheless, for a single-node swarm, these considerations do not apply.
 
@@ -1320,11 +1320,17 @@ To stop this application, just remove the stack:
 
 This will delete all associated services (and containers), networks and secrets, but not volumes.
 
-More features
-^^^^^^^^^^^^^
-At this point, reader might realize that our application, though functional, lacks many features which are common in real-life installations, namely:
+More features and final thoughts
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-*
-Routing mesh, load balancing, sticky session vs tomcat session replication
+At this point, reader might realize that our application, though functional, lacks many features which are common in real-life installations. We provide some below:
 
+* **Routing**: our clustered application provides the ``liferay`` service, delivered by several nodes. However, each has to be accessed through its IP address. ``liferay`` service should be reachable through a well-known endpoint URL (or some of them). This requires some additional services (such as and/or configuration. Moreover, the set of nodes to which such a front routing feature would redirect requests to is subject to change: nodes may be tear down and rescheduled into a different machine, liferay cluster may be scaled, etc. So, the routing must be dynamic and self-configurable.
+* **Load balancing**: related to the routing feature, load balancing is about managing system load to send new requests to nodes having more processing capacity.
+* **Session managment**: user experience accessing ``liferay`` service must be smooth. Based on routing and load balancing, session management ensures that user session is not lost in presence of changes in the ``lieray`` service. This may happen trhough a variety of techniques such as sticky session or app server session replication
+* **Securing connections**: both between the different services and also amongst the outside world and the ``liferay`` service. This requires proper configuration and certificate provisioning
+* **Clustering other services**: as we saw with the ``liferay`` service, just running the app in a clustered platform does not imply having clustered services. Why not consider clustering the ``database``, ``search`` (ES has extensive clustering support) or even document storage?
+* **CDN**: a Content Delivery Network helps to serve static resources by hosting them close to where they will be requested. This reduces network latency and offloads the application servier hosting liferay.
+* **Deployment strategies**: as part of service maintenance, services will require to be stopped and restarted in order to deploy new software or patch it. A clear example is patching liferay. Sometimes we just want to push some contents to production. Wouldn't it be great to keep service up and running during all these operations? This may be achieved via some deployment techniques (such as green-blue or canary deployments). The infrastructure and even the apps themselves may help operator to apply them.
 
+List is far from being exhaustive. We could keep adding much more features like *backup management*, *CI/CD* or *configuration management*. List just tries to illustrate how many concerns can still be addressed, and how our application and its surrounding environment can grow in complexity to meet them. Unfortunately, these lie out of the scope of this tutorial.
