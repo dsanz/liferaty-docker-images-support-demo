@@ -21,7 +21,7 @@ Running a docker engine command in the host is nothing but exercising the `Docke
 
 When your application needs *different* containers (say, the Liferay and a mysql for the DB storage), then working with the docker client CLI becomes a hard task: both containers need to be provided with same network settings so that they can talk to each other, they should start at the same time, status needs to be monitored for each container, etc. Even in simple cases like this, you'll likely need to code some scripts to work with both containers in a consistent way.
 
-These, amongst others, were the reasons to develop container orchestrators. What if, rather than direct commands, we could describe the **desired system state** in a *declarative way*, by providing some sort of descriptor?.
+These, amongst others, were the reasons to develop container orchestrators. What if, rather than direct commands, we could describe the **desired system state** in a *declarative way*, by providing some sort of descriptor?
 
 Such a file descriptor would somehow substitute direct invocations to the ``docker run`` command above. Therefore, it must contain the elements required to run the containers:
 
@@ -31,7 +31,7 @@ Such a file descriptor would somehow substitute direct invocations to the ``dock
     image: <image 1>
     <options for image 1>
  service 2:
-    image: <image 2>:
+    image: <image 2>
     <options for image 2>
 
 Now imagine we can run the orchestrator using that descriptor file. The orchestrator takes care of managing such services by creating the required containers with the right options, monitoring them, stopping them, etc. That would save a lot of work!
@@ -65,7 +65,7 @@ However, to run this, we'll not use ``docker run`` but ``docker-compose``. Pleas
 
 A note about file naming: as sample file is not named ``docker-compose.yml`` as the standard convention suggests, we'll have to tell what file do we want docker-compose to read. This is achieved with the ``-f`` option.
 
-We'll start the services in the above composition by using the ``up`` command:
+We'll start the services in the sample #1 composition by using the ``up`` command. Note we're running it from the ``tutorials/`` folder in this repo:
 
 .. code-block:: bash
 
@@ -105,7 +105,7 @@ As opposed to ``docker run``, where containers use the default bridge network, d
 
 You can now access liferay from your host as you'd do if you ran the tomcat directly.
 
-If you hit ``Ctrl-C`` you'll stop all the services. In this sense, docker-compose works in *attached* mode by default.
+If you hit ``Ctrl-C`` you'll stop all the services. In this sense, docker-compose works in `attached mode <./00_basic_liferay_container_operations.rst#what-if-container-is-not-interactive--getting-liferay-logs>`_ by default.
 
 **Bonus exercise**: using ``docker inspect <container id>``, examine a ``liferay/portal:7.3.1-ga2`` container run with ``docker run`` and another one run via ``docker-compose up``. Note the main differences.
 
@@ -1333,4 +1333,4 @@ At this point, reader might realize that our application, though functional, lac
 * **CDN**: a Content Delivery Network helps to serve static resources by hosting them close to where they will be requested. This reduces network latency and offloads the application servier hosting liferay.
 * **Deployment strategies**: as part of service maintenance, services will require to be stopped and restarted in order to deploy new software or patch it. A clear example is patching liferay. Sometimes we just want to push some contents to production. Wouldn't it be great to keep service up and running during all these operations? This may be achieved via some deployment techniques (such as green-blue or canary deployments). The infrastructure and even the apps themselves may help operator to apply them.
 
-List is far from being exhaustive. We could keep adding much more features like *backup management*, *CI/CD* or *configuration management*. List just tries to illustrate how many concerns can still be addressed, and how our application and its surrounding environment can grow in complexity to meet them. Unfortunately, these lie out of the scope of this tutorial.
+List is far from being exhaustive. We could keep adding much more features like *backup management*, *CI/CD*, *monitoring*  or *configuration management*. List just tries to illustrate how many concerns can still be addressed, and how our application and its surrounding environment can grow in complexity to meet them. Unfortunately, these lie out of the scope of this tutorial.
