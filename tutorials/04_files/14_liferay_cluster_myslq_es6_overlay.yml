@@ -21,8 +21,8 @@ services:
       - volume-doclib:/opt/liferay/data/document_library
   database:
     image: mysql:8.0
-    #command:
-    #  - "--init-file=/docker-entrypoint-initdb.d/clean_jgroups.sql"
+    command:
+      - "--init-file=/docker-entrypoint-initdb.d/clean_jgroups.sql"
     environment:
       MYSQL_ROOT_PASSWORD: testroot
       MYSQL_DATABASE: ${mysql_database_name}
